@@ -4,6 +4,7 @@ const status = document.getElementById('status');
 const resetBtn = document.getElementById('reset');
 const resetScoreBtn = document.getElementById('resetScore');
 const scoreDisplay = document.getElementById('score');
+const themeToggle = document.getElementById('themeToggle');
 
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
@@ -86,6 +87,21 @@ function resetScore() {
   updateScoreDisplay();
 }
 
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  themeToggle.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}\u{FE0F}';
+  localStorage.setItem('theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  setTheme(current === 'light' ? 'dark' : 'light');
+}
+
+const savedTheme = localStorage.getItem('theme') || 'dark';
+setTheme(savedTheme);
+
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
+themeToggle.addEventListener('click', toggleTheme);
