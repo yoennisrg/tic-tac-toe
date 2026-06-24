@@ -1,3 +1,29 @@
+:root {
+  --bg: #1a1a2e;
+  --text: #eee;
+  --cell-bg: #16213e;
+  --cell-hover: #1a1a4e;
+  --cell-win: #2d6a4f;
+  --btn-bg: #0f3460;
+  --btn-hover: #1a5276;
+  --btn-reset-bg: #6b1a1a;
+  --btn-reset-hover: #8a2a2a;
+  --toggle-bg: #16213e;
+}
+
+[data-theme="light"] {
+  --bg: #f0f2f5;
+  --text: #1a1a2e;
+  --cell-bg: #fff;
+  --cell-hover: #e8ecf1;
+  --cell-win: #a7d8a7;
+  --btn-bg: #4a90d9;
+  --btn-hover: #357abd;
+  --btn-reset-bg: #d94a4a;
+  --btn-reset-hover: #c0392b;
+  --toggle-bg: #ddd;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,12 +32,13 @@
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  background: #1a1a2e;
-  color: #eee;
+  background: var(--bg);
+  color: var(--text);
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
 }
 
 .container {
@@ -38,7 +65,7 @@ h1 {
 }
 
 .cell {
-  background: #16213e;
+  background: var(--cell-bg);
   border-radius: 8px;
   display: flex;
   justify-content: center;
@@ -46,12 +73,12 @@ h1 {
   font-size: 2.5rem;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.3s, color 0.3s;
   user-select: none;
 }
 
 .cell:hover {
-  background: #1a1a4e;
+  background: var(--cell-hover);
 }
 
 .cell.x {
@@ -63,7 +90,7 @@ h1 {
 }
 
 .cell.win {
-  background: #2d6a4f;
+  background: var(--cell-win);
 }
 
 .cell.win.x {
@@ -79,14 +106,14 @@ h1 {
   font-size: 1rem;
   border: none;
   border-radius: 8px;
-  background: #0f3460;
-  color: #eee;
+  background: var(--btn-bg);
+  color: var(--text);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.3s, color 0.3s;
 }
 
 .reset:hover {
-  background: #1a5276;
+  background: var(--btn-hover);
 }
 
 .score {
@@ -97,9 +124,32 @@ h1 {
 
 .reset-score {
   margin-left: 0.5rem;
-  background: #6b1a1a;
+  background: var(--btn-reset-bg);
 }
 
 .reset-score:hover {
-  background: #8a2a2a;
+  background: var(--btn-reset-hover);
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--toggle-bg);
+  color: var(--text);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s, transform 0.3s;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
 }
