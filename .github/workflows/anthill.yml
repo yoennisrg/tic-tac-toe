@@ -1,11 +1,8 @@
 name: Anthill
 
 on:
-  workflow_dispatch:
-    inputs:
-      ticket_id:
-        description: GitHub Issue number (e.g. 1)
-        required: true
+  issues:
+    types: [labeled]
 
 jobs:
   run:
@@ -17,9 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: yoennisrg/anthill-action@v0.2.6
+      - uses: yoennisrg/anthill-action/on-issue@v0.2.9
         with:
-          ticket_id: ${{ github.event.inputs.ticket_id }}
+          label: ready-for-dev
           repository: ${{ github.repository }}
           branch: main
           github_token: ${{ secrets.ANTHILL_GITHUB_TOKEN }}
