@@ -88,3 +88,18 @@ h1 {
 .reset:hover {
   background: #1a5276;
 }
+
+.score {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  min-height: 2rem;
+}
+
+.reset-score {
+  margin-left: 0.5rem;
+  background: #6b1a1a;
+}
+
+.reset-score:hover {
+  background: #8a2a2a;
+}

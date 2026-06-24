@@ -2,10 +2,19 @@ const board = document.getElementById('board');
 const cells = document.querySelectorAll('.cell');
 const status = document.getElementById('status');
 const resetBtn = document.getElementById('reset');
+const resetScoreBtn = document.getElementById('resetScore');
+const scoreDisplay = document.getElementById('score');
 
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
+let scoreX = parseInt(localStorage.getItem('scoreX') || '0');
+let scoreO = parseInt(localStorage.getItem('scoreO') || '0');
+
+function updateScoreDisplay() {
+  scoreDisplay.textContent = `X: ${scoreX} | O: ${scoreO}`;
+}
+updateScoreDisplay();
 
 const winPatterns = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -39,6 +48,10 @@ function checkWin() {
       cells[b].classList.add('win');
       cells[c].classList.add('win');
       status.textContent = `Player ${currentPlayer} wins!`;
+      if (currentPlayer === 'X') scoreX++; else scoreO++;
+      localStorage.setItem('scoreX', scoreX);
+      localStorage.setItem('scoreO', scoreO);
+      updateScoreDisplay();
       return true;
     }
   }
@@ -65,5 +78,14 @@ function resetGame() {
   });
 }
 
+function resetScore() {
+  scoreX = 0;
+  scoreO = 0;
+  localStorage.setItem('scoreX', '0');
+  localStorage.setItem('scoreO', '0');
+  updateScoreDisplay();
+}
+
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
 resetBtn.addEventListener('click', resetGame);
+resetScoreBtn.addEventListener('click', resetScore);
