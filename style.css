@@ -1,0 +1,90 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.container {
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.status {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  min-height: 2rem;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  grid-template-rows: repeat(3, 100px);
+  gap: 6px;
+  margin-bottom: 1.5rem;
+}
+
+.cell {
+  background: #16213e;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.cell:hover {
+  background: #1a1a4e;
+}
+
+.cell.x {
+  color: #00d4ff;
+}
+
+.cell.o {
+  color: #ff6b6b;
+}
+
+.cell.win {
+  background: #2d6a4f;
+}
+
+.cell.win.x {
+  color: #fff;
+}
+
+.cell.win.o {
+  color: #fff;
+}
+
+.reset {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #0f3460;
+  color: #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reset:hover {
+  background: #1a5276;
+}
