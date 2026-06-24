@@ -1,0 +1,27 @@
+name: Anthill
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticket_id:
+        description: GitHub Issue number (e.g. 1)
+        required: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: yoennisrg/anthill-action@v0.1.8
+        with:
+          ticket_id: ${{ github.event.inputs.ticket_id }}
+          repository: ${{ github.repository }}
+          branch: main
+          github_token: ${{ secrets.ANTHILL_GITHUB_TOKEN }}
+          opencode_api_key: ${{ secrets.OPENCODE_API_KEY }}
+          brave_api_key: ${{ secrets.BRAVE_API_KEY }}
