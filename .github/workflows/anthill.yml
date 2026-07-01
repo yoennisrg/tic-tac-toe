@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: yoennisrg/anthill-action/on-event@main
+      - uses: yoennisrg/anthill-action@main
         with:
           intent_url: ${{ secrets.ANTHILL_INTENT_URL }}
           client_id: ${{ secrets.ANTHILL_CLIENT_ID }}
