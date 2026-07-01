@@ -10,8 +10,6 @@ jobs:
     name: Poll Intent
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
       - uses: yoennisrg/anthill-action@main
         with:
           intent_url: ${{ secrets.ANTHILL_INTENT_URL }}
