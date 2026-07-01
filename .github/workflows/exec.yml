@@ -1,0 +1,70 @@
+name: Anthill — exec
+
+on:
+  workflow_dispatch:
+    inputs:
+      agent_event:
+        description: AgentEvent JSON
+        required: true
+      intent_url:
+        description: Intent API base URL
+        required: true
+      client_id:
+        description: Runtime client ID
+        required: true
+      github_token:
+        description: GitHub token
+        required: true
+      opencode_api_key:
+        description: OpenCode API key
+        required: false
+      merge_token:
+        description: GitHub token with merge permissions
+        required: false
+      registry_token:
+        description: GitHub token for GHCR
+        required: false
+      brave_api_key:
+        description: Brave Search API key
+        required: false
+      repository:
+        description: Target repository
+        required: false
+        default: ${{ github.repository }}
+      branch:
+        description: Target branch
+        required: false
+        default: main
+      merge:
+        description: Merge policy
+        required: false
+        default: manual
+      model:
+        description: AI model override
+        required: false
+
+jobs:
+  exec:
+    name: Execute agent
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: yoennisrg/anthill/exec@main
+        with:
+          agent_event: ${{ inputs.agent_event }}
+          intent_url: ${{ inputs.intent_url }}
+          client_id: ${{ inputs.client_id }}
+          github_token: ${{ inputs.github_token || secrets.ANTHILL_GITHUB_TOKEN }}
+          opencode_api_key: ${{ inputs.opencode_api_key || secrets.OPENCODE_API_KEY }}
+          merge_token: ${{ inputs.merge_token || secrets.ANTHILL_GITHUB_TOKEN }}
+          registry_token: ${{ inputs.registry_token || secrets.ANTHILL_GITHUB_TOKEN }}
+          brave_api_key: ${{ inputs.brave_api_key || secrets.BRAVE_API_KEY }}
+          repository: ${{ inputs.repository }}
+          branch: ${{ inputs.branch }}
+          merge: ${{ inputs.merge }}
+          model: ${{ inputs.model }}
