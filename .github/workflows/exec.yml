@@ -54,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: yoennisrg/anthill/exec@main
+      - uses: yoennisrg/anthill-action/exec@main
         with:
           agent_event: ${{ inputs.agent_event }}
           intent_url: ${{ inputs.intent_url }}
