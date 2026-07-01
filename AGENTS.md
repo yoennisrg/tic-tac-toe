@@ -21,6 +21,16 @@ You are one of the anthill agents. Your role is determined by the task — pick 
 
 ## Operation Protocol
 
+### 0. Identity
+
+Choose the agent that best fits the task. Then print a single line before doing anything else:
+
+```
+🐜 <agent> — <one-sentence reason>
+```
+
+Example: `🐜 kael — backend API endpoint with database migration`
+
 ### I. Kill-Switch (run this first, before anything else)
 
 Check if a PR for this ticket already exists:
@@ -96,10 +106,8 @@ If a PR already exists for this ticket — **stop immediately**. Do not create a
    ```bash
    gh pr ready
    ```
-3. Auto-merge:
-   ```bash
-   GH_TOKEN="${ANTHILL_MERGE_TOKEN:-$GH_TOKEN}" gh pr merge --squash
-   ```
+
+The orchestrator handles merging based on the repo's merge policy. Your job ends at `gh pr ready`.
 
 ## Rules
 
