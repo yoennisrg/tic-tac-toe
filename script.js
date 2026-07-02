@@ -28,8 +28,51 @@ let scoreX = parseInt(localStorage.getItem('scoreX') || '0');
 let scoreO = parseInt(localStorage.getItem('scoreO') || '0');
 let roundNumber = parseInt(localStorage.getItem('roundNumber') || '0');
 
+const nameXInput = document.getElementById('nameX');
+const nameOInput = document.getElementById('nameO');
+
+function getDefaultName(player) {
+  return player === 'X' ? 'Player X' : 'Player O';
+}
+
+function loadName(player) {
+  return localStorage.getItem('name' + player) || getDefaultName(player);
+}
+
+function saveName(player, value) {
+  const trimmed = value.trim();
+  localStorage.setItem('name' + player, trimmed || '');
+}
+
+function getPlayerName(player) {
+  const saved = localStorage.getItem('name' + player);
+  return saved && saved.trim() ? saved.trim() : getDefaultName(player);
+}
+
+nameXInput.value = loadName('X');
+nameOInput.value = loadName('O');
+
+function onNameInput(player, input) {
+  saveName(player, input.value);
+  updateStatus();
+  updateScoreDisplay();
+}
+
+nameXInput.addEventListener('input', () => onNameInput('X', nameXInput));
+nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
+
+function updateStatus() {
+  if (!gameActive) return;
+  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+}
+
+function setNamesDisabled(disabled) {
+  nameXInput.disabled = disabled;
+  nameOInput.disabled = disabled;
+}
+
 function updateScoreDisplay() {
-  scoreDisplay.textContent = `X: ${scoreX} | O: ${scoreO}`;
+  scoreDisplay.textContent = `${getPlayerName('X')}: ${scoreX} | ${getPlayerName('O')}: ${scoreO}`;
 }
 updateScoreDisplay();
 
@@ -48,12 +91,13 @@ function handleCellClick(e) {
   gameState[index] = currentPlayer;
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
+  setNamesDisabled(true);
 
   if (checkWin()) return;
   if (checkDraw()) return;
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-  status.textContent = `Player ${currentPlayer}'s turn`;
+  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
 }
 
 function getCellCenter(index) {
@@ -105,7 +149,7 @@ function checkWin() {
       cells[a].classList.add('win');
       cells[b].classList.add('win');
       cells[c].classList.add('win');
-      status.textContent = `Player ${currentPlayer} wins!`;
+      status.textContent = `${getPlayerName(currentPlayer)} wins!`;
       if (currentPlayer === 'X') scoreX++; else scoreO++;
       localStorage.setItem('scoreX', scoreX);
       localStorage.setItem('scoreO', scoreO);
@@ -132,7 +176,8 @@ function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
-  status.textContent = "Player X's turn";
+  status.textContent = `${getPlayerName('X')}'s turn`;
+  setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
     cell.classList.remove('x', 'o', 'win');
