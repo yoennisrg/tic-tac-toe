@@ -10,6 +10,9 @@ const clearHistoryBtn = document.getElementById('clearHistory');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
 
+const SVG_X = '<svg class="symbol" viewBox="0 0 100 100"><line class="x-line" x1="20" y1="20" x2="80" y2="80"/><line class="x-line" x1="80" y1="20" x2="20" y2="80"/></svg>';
+const SVG_O = '<svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle" cx="50" cy="50" r="30"/></svg>';
+
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
@@ -43,7 +46,7 @@ function handleCellClick(e) {
   if (!gameActive || gameState[index] !== '') return;
 
   gameState[index] = currentPlayer;
-  cell.textContent = currentPlayer;
+  cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
 
   if (checkWin()) return;
