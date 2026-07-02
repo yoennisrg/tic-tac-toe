@@ -62,6 +62,7 @@ body {
   border-radius: 20px;
   padding: 2.5rem;
   box-shadow: 0 8px 32px var(--glass-shadow);
+  width: min(100%, 500px);
 }
 
 h1 {
@@ -120,8 +121,8 @@ h1 {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(3, 100px);
-  grid-template-rows: repeat(3, 100px);
+  grid-template-columns: repeat(3, min(26vw, 110px));
+  grid-template-rows: repeat(3, min(26vw, 110px));
   gap: 6px;
   margin-bottom: 1.5rem;
   position: relative;
@@ -148,10 +149,18 @@ h1 {
   cursor: pointer;
   transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
   user-select: none;
+  touch-action: manipulation;
 }
 
 .cell:hover {
   background: var(--cell-hover);
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1.5rem 0.75rem;
+    border-radius: 16px;
+  }
 }
 
 .cell .symbol {

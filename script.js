@@ -156,7 +156,7 @@ function handleCellClick(e) {
 function getCellCenter(index) {
   const col = index % 3;
   const row = Math.floor(index / 3);
-  const cellSize = 100;
+  const cellSize = (board.offsetWidth - 12) / 3;
   const gap = 6;
   return {
     x: col * (cellSize + gap) + cellSize / 2,
