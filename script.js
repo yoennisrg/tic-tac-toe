@@ -120,7 +120,10 @@ function setNamesDisabled(disabled) {
 }
 
 function updateScoreDisplay() {
-  scoreDisplay.textContent = `${getPlayerName('X')}: ${scoreX} | ${getPlayerName('O')}: ${scoreO}`;
+  scoreDisplay.innerHTML = `
+    <span class="score-badge score-badge--x">${getPlayerName('X')}: ${scoreX}</span>
+    <span class="score-badge score-badge--o">${getPlayerName('O')}: ${scoreO}</span>
+  `;
 }
 updateScoreDisplay();
 
@@ -206,7 +209,9 @@ function checkWin() {
       localStorage.setItem('scoreO', scoreO);
       updateScoreDisplay();
       saveGameHistory(currentPlayer);
-      drawWinLine(pattern, currentPlayer === 'X' ? '#00d4ff' : '#ff6b6b');
+      const style = getComputedStyle(document.documentElement);
+      const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
+      drawWinLine(pattern, winColor);
       return true;
     }
   }

@@ -1,27 +1,37 @@
 :root {
-  --bg: #1a1a2e;
+  --bg: #0f0f1a;
   --text: #eee;
-  --cell-bg: #16213e;
-  --cell-hover: #1a1a4e;
+  --cell-bg: rgba(255, 255, 255, 0.06);
+  --cell-hover: rgba(255, 255, 255, 0.10);
   --cell-win: #2d6a4f;
-  --btn-bg: #0f3460;
-  --btn-hover: #1a5276;
-  --btn-reset-bg: #6b1a1a;
-  --btn-reset-hover: #8a2a2a;
-  --toggle-bg: #16213e;
+  --btn-bg-start: #4a6cf7;
+  --btn-bg-end: #6366f1;
+  --btn-reset-bg-start: #ef4444;
+  --btn-reset-bg-end: #dc2626;
+  --toggle-bg: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: rgba(0, 0, 0, 0.4);
+  --color-x: #38bdf8;
+  --color-o: #fb7185;
 }
 
 [data-theme="light"] {
-  --bg: #f0f2f5;
+  --bg: #eef1f5;
   --text: #1a1a2e;
-  --cell-bg: #fff;
-  --cell-hover: #e8ecf1;
+  --cell-bg: rgba(255, 255, 255, 0.7);
+  --cell-hover: rgba(255, 255, 255, 0.9);
   --cell-win: #a7d8a7;
-  --btn-bg: #4a90d9;
-  --btn-hover: #357abd;
-  --btn-reset-bg: #d94a4a;
-  --btn-reset-hover: #c0392b;
-  --toggle-bg: #ddd;
+  --btn-bg-start: #4a6cf7;
+  --btn-bg-end: #6366f1;
+  --btn-reset-bg-start: #ef4444;
+  --btn-reset-bg-end: #dc2626;
+  --toggle-bg: rgba(0, 0, 0, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-shadow: rgba(0, 0, 0, 0.08);
+  --color-x: #0284c7;
+  --color-o: #e11d48;
 }
 
 * {
@@ -31,8 +41,10 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg);
+  background-image: radial-gradient(ellipse at 20% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 50%, rgba(251, 113, 133, 0.06) 0%, transparent 50%);
   color: var(--text);
   display: flex;
   justify-content: center;
@@ -43,11 +55,24 @@ body {
 
 .container {
   text-align: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 32px var(--glass-shadow);
 }
 
 h1 {
   font-size: 2.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.02em;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--color-x), var(--color-o));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .names {
@@ -73,7 +98,7 @@ h1 {
 }
 
 .names input:focus {
-  border-color: var(--btn-bg);
+  border-color: var(--color-x);
 }
 
 .names input:disabled {
@@ -145,11 +170,11 @@ h1 {
 }
 
 .cell.x {
-  color: #00d4ff;
+  color: var(--color-x);
 }
 
 .cell.o {
-  color: #ff6b6b;
+  color: var(--color-o);
 }
 
 .cell.x .x-line {
@@ -183,32 +208,30 @@ h1 {
 
 .reset {
   padding: 0.75rem 2rem;
-  font-size: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   border: none;
-  border-radius: 8px;
-  background: var(--btn-bg);
-  color: var(--text);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--btn-bg-start), var(--btn-bg-end));
+  color: #fff;
   cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
 }
 
 .reset:hover {
-  background: var(--btn-hover);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
-.score {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-  min-height: 2rem;
+.reset:active {
+  transform: translateY(0);
 }
 
 .reset-score {
+  background: linear-gradient(135deg, var(--btn-reset-bg-start), var(--btn-reset-bg-end));
   margin-left: 0.5rem;
-  background: var(--btn-reset-bg);
-}
-
-.reset-score:hover {
-  background: var(--btn-reset-hover);
 }
 
 .history {
@@ -232,11 +255,20 @@ h1 {
 .clear-history {
   font-size: 0.8rem;
   padding: 0.3rem 0.8rem;
-  background: var(--btn-reset-bg);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--btn-reset-bg-start), var(--btn-reset-bg-end));
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: opacity 0.3s, transform 0.2s;
 }
 
 .clear-history:hover {
-  background: var(--btn-reset-hover);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .history-list {
@@ -278,9 +310,11 @@ h1 {
 .top-btn {
   width: 44px;
   height: 44px;
-  border: none;
+  border: 1px solid var(--glass-border);
   border-radius: 50%;
-  background: var(--toggle-bg);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: var(--text);
   font-size: 1.25rem;
   cursor: pointer;
