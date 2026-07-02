@@ -7,10 +7,20 @@ const scoreDisplay = document.getElementById('score');
 const themeToggle = document.getElementById('themeToggle');
 const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistory');
+const canvas = document.getElementById('winCanvas');
+const ctx = canvas.getContext('2d');
 
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
+let winAnimId = null;
+
+function resizeCanvas() {
+  canvas.width = board.offsetWidth;
+  canvas.height = board.offsetHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 let scoreX = parseInt(localStorage.getItem('scoreX') || '0');
 let scoreO = parseInt(localStorage.getItem('scoreO') || '0');
 let roundNumber = parseInt(localStorage.getItem('roundNumber') || '0');
@@ -43,6 +53,47 @@ function handleCellClick(e) {
   status.textContent = `Player ${currentPlayer}'s turn`;
 }
 
+function getCellCenter(index) {
+  const col = index % 3;
+  const row = Math.floor(index / 3);
+  const cellSize = 100;
+  const gap = 6;
+  return {
+    x: col * (cellSize + gap) + cellSize / 2,
+    y: row * (cellSize + gap) + cellSize / 2,
+  };
+}
+
+function drawWinLine(pattern, color) {
+  const start = getCellCenter(pattern[0]);
+  const end = getCellCenter(pattern[2]);
+  const duration = 400;
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(
+      start.x + (end.x - start.x) * progress,
+      start.y + (end.y - start.y) * progress,
+    );
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    if (progress < 1) {
+      winAnimId = requestAnimationFrame(animate);
+    }
+  }
+
+  winAnimId = requestAnimationFrame(animate);
+}
+
 function checkWin() {
   for (const pattern of winPatterns) {
     const [a, b, c] = pattern;
@@ -57,6 +108,7 @@ function checkWin() {
       localStorage.setItem('scoreO', scoreO);
       updateScoreDisplay();
       saveGameHistory(currentPlayer);
+      drawWinLine(pattern, currentPlayer === 'X' ? '#00d4ff' : '#ff6b6b');
       return true;
     }
   }
@@ -82,6 +134,9 @@ function resetGame() {
     cell.textContent = '';
     cell.classList.remove('x', 'o', 'win');
   });
+  if (winAnimId) cancelAnimationFrame(winAnimId);
+  winAnimId = null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 function resetScore() {
