@@ -2,7 +2,7 @@ name: Anthill
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # poll Intent every 5 minutes
+    - cron: '*/1 * * * *'   # poll Intent every minute (GitHub minimum)
   workflow_dispatch:         # manual trigger for testing
 
 jobs:
