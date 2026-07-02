@@ -185,6 +185,16 @@ function resetGame() {
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  triggerBoardEnter();
+}
+
+function triggerBoardEnter() {
+  cells.forEach((cell, i) => {
+    cell.style.animationDelay = `${i * 50}ms`;
+  });
+  board.classList.remove('entered');
+  void board.offsetWidth;
+  board.classList.add('entered');
 }
 
 function resetScore() {
@@ -258,4 +268,5 @@ resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 clearHistoryBtn.addEventListener('click', clearHistory);
 
+triggerBoardEnter();
 renderHistory();
