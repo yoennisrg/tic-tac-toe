@@ -113,10 +113,124 @@ h1 {
   font-weight: 600;
 }
 
-.status {
-  font-size: 1.25rem;
+.turn-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2.5rem;
+  margin-bottom: 0.25rem;
+  padding: 0.5rem 0;
+}
+
+.player-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.player-token {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  background: var(--cell-bg);
+}
+
+.player-token svg {
+  width: 60%;
+  height: 60%;
+}
+
+.player-token svg line,
+.player-token svg circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.player-indicator[data-player="X"] .player-token {
+  color: var(--color-x);
+}
+
+.player-indicator[data-player="O"] .player-token {
+  color: var(--color-o);
+}
+
+.player-indicator.active .player-token {
+  transform: scale(1.15);
+  box-shadow: 0 0 8px currentColor, 0 0 20px currentColor;
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+.player-indicator.inactive {
+  opacity: 0.4;
+}
+
+.player-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.player-indicator.inactive .player-label {
+  opacity: 0.7;
+}
+
+.winner-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  z-index: 2;
+}
+
+.player-indicator.winner .winner-badge {
+  display: flex;
+}
+
+.player-indicator.winner .player-token {
+  animation: none;
+  transform: scale(1.15);
+  box-shadow: 0 0 12px currentColor;
+}
+
+.player-indicator.winner {
+  opacity: 1;
+}
+
+.turn-subtitle {
+  font-size: 1rem;
+  color: #888;
   margin-bottom: 1.5rem;
-  min-height: 2rem;
+  min-height: 1.5rem;
+  font-weight: 500;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px currentColor, 0 0 14px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 14px currentColor, 0 0 28px currentColor;
+  }
 }
 
 .board {

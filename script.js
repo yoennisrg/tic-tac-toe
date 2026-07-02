@@ -1,6 +1,6 @@
 const board = document.getElementById('board');
 const cells = document.querySelectorAll('.cell');
-const status = document.getElementById('status');
+const turnSubtitle = document.getElementById('turnSubtitle');
 const resetBtn = document.getElementById('reset');
 const resetScoreBtn = document.getElementById('resetScore');
 const scoreDisplay = document.getElementById('score');
@@ -102,16 +102,44 @@ nameOInput.value = loadName('O');
 
 function onNameInput(player, input) {
   saveName(player, input.value);
-  updateStatus();
+  updateTurnIndicator();
   updateScoreDisplay();
 }
 
 nameXInput.addEventListener('input', () => onNameInput('X', nameXInput));
 nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
 
-function updateStatus() {
-  if (!gameActive) return;
-  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+function getIndicator(player) {
+  return document.querySelector(`.player-indicator[data-player="${player}"]`);
+}
+
+function updateTurnIndicator() {
+  document.getElementById('labelX').textContent = getPlayerName('X');
+  document.getElementById('labelO').textContent = getPlayerName('O');
+
+  const xInd = getIndicator('X');
+  const oInd = getIndicator('O');
+  xInd.classList.remove('winner');
+  oInd.classList.remove('winner');
+
+  if (!gameActive) {
+    xInd.classList.remove('active', 'inactive');
+    oInd.classList.remove('active', 'inactive');
+    return;
+  }
+
+  xInd.classList.remove('active', 'inactive');
+  oInd.classList.remove('active', 'inactive');
+
+  if (currentPlayer === 'X') {
+    xInd.classList.add('active');
+    oInd.classList.add('inactive');
+    turnSubtitle.textContent = `${getPlayerName('X')}'s turn`;
+  } else {
+    oInd.classList.add('active');
+    xInd.classList.add('inactive');
+    turnSubtitle.textContent = `${getPlayerName('O')}'s turn`;
+  }
 }
 
 function setNamesDisabled(disabled) {
@@ -150,7 +178,7 @@ function handleCellClick(e) {
   if (checkDraw()) return;
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  updateTurnIndicator();
 }
 
 function getCellCenter(index) {
@@ -203,7 +231,10 @@ function checkWin() {
       cells[b].classList.add('win');
       cells[c].classList.add('win');
       audio.playWin();
-      status.textContent = `${getPlayerName(currentPlayer)} wins!`;
+      turnSubtitle.textContent = `${getPlayerName(currentPlayer)} wins!`;
+      getIndicator(currentPlayer).classList.add('winner');
+      getIndicator(currentPlayer).classList.remove('active');
+      getIndicator(currentPlayer === 'X' ? 'O' : 'X').classList.remove('active', 'inactive');
       if (currentPlayer === 'X') scoreX++; else scoreO++;
       localStorage.setItem('scoreX', scoreX);
       localStorage.setItem('scoreO', scoreO);
@@ -222,7 +253,9 @@ function checkDraw() {
   if (gameState.every(cell => cell !== '')) {
     gameActive = false;
     audio.playDraw();
-    status.textContent = "It's a draw!";
+    turnSubtitle.textContent = "It's a draw!";
+    getIndicator('X').classList.remove('active', 'inactive');
+    getIndicator('O').classList.remove('active', 'inactive');
     saveGameHistory('Draw');
     return true;
   }
@@ -233,8 +266,8 @@ function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
-  status.textContent = `${getPlayerName('X')}'s turn`;
   setNamesDisabled(false);
+  updateTurnIndicator();
   cells.forEach(cell => {
     cell.textContent = '';
     cell.classList.remove('x', 'o', 'win');
