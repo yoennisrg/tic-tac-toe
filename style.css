@@ -266,10 +266,16 @@ h1 {
   padding: 0.5rem;
 }
 
-.theme-toggle {
+.top-buttons {
   position: fixed;
   top: 1rem;
   right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.top-btn {
   width: 44px;
   height: 44px;
   border: none;
@@ -279,12 +285,11 @@ h1 {
   font-size: 1.25rem;
   cursor: pointer;
   transition: background 0.3s, color 0.3s, transform 0.3s;
-  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.theme-toggle:hover {
+.top-btn:hover {
   transform: scale(1.1);
 }

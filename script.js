@@ -5,10 +5,58 @@ const resetBtn = document.getElementById('reset');
 const resetScoreBtn = document.getElementById('resetScore');
 const scoreDisplay = document.getElementById('score');
 const themeToggle = document.getElementById('themeToggle');
+const muteToggle = document.getElementById('muteToggle');
 const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistory');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
+
+const audio = {
+  ctx: null,
+  get muted() {
+    return localStorage.getItem('muted') === 'true';
+  },
+  set muted(v) {
+    localStorage.setItem('muted', v);
+    muteToggle.textContent = v ? '\u{1F507}' : '\u{1F50A}';
+  },
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+  playTone(freq, duration, startTime) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.15, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  },
+  playMove() {
+    if (this.muted) return;
+    this.init();
+    this.playTone(440, 0.08, this.ctx.currentTime);
+  },
+  playWin() {
+    if (this.muted) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    this.playTone(523, 0.35, now);
+    this.playTone(659, 0.35, now + 0.15);
+    this.playTone(784, 0.35, now + 0.3);
+  },
+  playDraw() {
+    if (this.muted) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    this.playTone(330, 0.3, now);
+    this.playTone(262, 0.3, now + 0.2);
+  },
+};
 
 const SVG_X = '<svg class="symbol" viewBox="0 0 100 100"><line class="x-line" x1="20" y1="20" x2="80" y2="80"/><line class="x-line" x1="80" y1="20" x2="20" y2="80"/></svg>';
 const SVG_O = '<svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle" cx="50" cy="50" r="30"/></svg>';
@@ -93,6 +141,8 @@ function handleCellClick(e) {
   cell.classList.add(currentPlayer.toLowerCase());
   setNamesDisabled(true);
 
+  audio.playMove();
+
   if (checkWin()) return;
   if (checkDraw()) return;
 
@@ -149,6 +199,7 @@ function checkWin() {
       cells[a].classList.add('win');
       cells[b].classList.add('win');
       cells[c].classList.add('win');
+      audio.playWin();
       status.textContent = `${getPlayerName(currentPlayer)} wins!`;
       if (currentPlayer === 'X') scoreX++; else scoreO++;
       localStorage.setItem('scoreX', scoreX);
@@ -165,6 +216,7 @@ function checkWin() {
 function checkDraw() {
   if (gameState.every(cell => cell !== '')) {
     gameActive = false;
+    audio.playDraw();
     status.textContent = "It's a draw!";
     saveGameHistory('Draw');
     return true;
@@ -252,10 +304,17 @@ function toggleTheme() {
 const savedTheme = localStorage.getItem('theme') || 'dark';
 setTheme(savedTheme);
 
+muteToggle.textContent = audio.muted ? '\u{1F507}' : '\u{1F50A}';
+
+function toggleMute() {
+  audio.muted = !audio.muted;
+}
+
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
+muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
 
 renderHistory();
