@@ -264,10 +264,42 @@ function resetScore() {
 
 function getHistory() {
   try {
-    return JSON.parse(localStorage.getItem('gameHistory') || '[]');
+    const raw = JSON.parse(localStorage.getItem('gameHistory') || '[]');
+    return raw.map(entry => {
+      if (typeof entry.timestamp === 'string') {
+        const parsed = new Date(entry.timestamp).getTime();
+        entry.timestamp = isNaN(parsed) ? Date.now() : parsed;
+      }
+      return entry;
+    });
   } catch {
     return [];
   }
+}
+
+function timeAgo(timestamp) {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 30) return 'just now';
+  if (minutes < 1) return `${seconds} seconds ago`;
+  if (minutes === 1) return '1 minute ago';
+  if (minutes < 60) return `${minutes} minutes ago`;
+  if (hours === 1) return '1 hour ago';
+  if (hours < 24) return `${hours} hours ago`;
+  if (hours < 48) return 'yesterday';
+  if (days < 30) return `${days} days ago`;
+  return new Date(timestamp).toLocaleDateString();
+}
+
+function getWinnerIcon(winner) {
+  if (winner === 'X') return '\u{1F7E6}';
+  if (winner === 'O') return '\u{1F7E5}';
+  return '\u{1F91D}';
 }
 
 function saveGameHistory(winner) {
@@ -277,25 +309,36 @@ function saveGameHistory(winner) {
   history.unshift({
     round: roundNumber,
     winner,
-    timestamp: new Date().toLocaleString()
+    timestamp: Date.now()
   });
-  if (history.length > 5) history.pop();
+  if (history.length > 10) history.pop();
   localStorage.setItem('gameHistory', JSON.stringify(history));
-  renderHistory();
+  renderHistory(true);
 }
 
-function renderHistory() {
+function renderHistory(isNewGame) {
   const history = getHistory();
   if (history.length === 0) {
     historyList.innerHTML = '<div class="history-empty">No games played yet</div>';
     return;
   }
-  historyList.innerHTML = history.map(entry =>
-    `<div class="history-entry">
-      <span>#${entry.round} — ${entry.winner}</span>
-      <span>${entry.timestamp}</span>
-    </div>`
-  ).join('');
+  const animClass = isNewGame ? ' history-entry-new' : '';
+  historyList.innerHTML = history.map((entry, i) => {
+    const icon = getWinnerIcon(entry.winner);
+    let winnerLabel;
+    if (entry.winner === 'Draw') {
+      winnerLabel = 'Draw';
+    } else {
+      winnerLabel = getPlayerName(entry.winner) + ' (' + entry.winner + ')';
+    }
+    return `<div class="history-entry${i === 0 && isNewGame ? animClass : ''}">
+      <span class="history-entry-main">
+        <span class="history-icon">${icon}</span>
+        <span>#${entry.round} — ${winnerLabel}</span>
+      </span>
+      <span class="history-time">${timeAgo(entry.timestamp)}</span>
+    </div>`;
+  }).join('');
 }
 
 function clearHistory() {
@@ -333,4 +376,4 @@ muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
 
 triggerBoardEnter();
-renderHistory();
+renderHistory(false);
