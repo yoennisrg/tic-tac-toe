@@ -16,12 +16,21 @@
   </div>
   <div class="container">
     <h1>Tic-Tac-Toe</h1>
+    <div class="mode-selector" id="modeSelector">
+      <button class="mode-btn active" data-mode="pvp">2 Players</button>
+      <button class="mode-btn" data-mode="pve">vs CPU</button>
+    </div>
+    <div class="difficulty-selector" id="difficultySelector">
+      <button class="diff-btn active" data-diff="easy">Easy</button>
+      <button class="diff-btn" data-diff="medium">Medium</button>
+      <button class="diff-btn" data-diff="hard">Hard</button>
+    </div>
     <div class="names">
       <input type="text" id="nameX" value="Player X" maxlength="20" spellcheck="false">
       <span class="vs">vs</span>
       <input type="text" id="nameO" value="Player O" maxlength="20" spellcheck="false">
     </div>
-    <div class="status" id="status">Player X's turn</div>
+    <div class="status" id="status">Select a game mode to start</div>
     <div class="board" id="board">
       <div class="cell" data-index="0"></div>
       <div class="cell" data-index="1"></div>

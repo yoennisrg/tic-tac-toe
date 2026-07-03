@@ -113,6 +113,70 @@ h1 {
   font-weight: 600;
 }
 
+.mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.mode-btn {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 2px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--cell-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, var(--btn-bg-start), var(--btn-bg-end));
+  color: #fff;
+  border-color: transparent;
+}
+
+.mode-btn:hover:not(.active) {
+  background: var(--cell-hover);
+}
+
+.difficulty-selector {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.diff-btn {
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 2px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--cell-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diff-btn.active {
+  background: linear-gradient(135deg, var(--btn-bg-start), var(--btn-bg-end));
+  color: #fff;
+  border-color: transparent;
+}
+
+.diff-btn:hover:not(.active) {
+  background: var(--cell-hover);
+}
+
 .status {
   font-size: 1.25rem;
   margin-bottom: 1.5rem;

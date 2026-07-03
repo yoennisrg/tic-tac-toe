@@ -11,6 +11,11 @@ const clearHistoryBtn = document.getElementById('clearHistory');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
 
+const modeSelector = document.getElementById('modeSelector');
+const difficultySelector = document.getElementById('difficultySelector');
+const modeBtns = document.querySelectorAll('.mode-btn');
+const diffBtns = document.querySelectorAll('.diff-btn');
+
 const audio = {
   ctx: null,
   get muted() {
@@ -65,6 +70,10 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let gameMode = 'pvp';
+let difficulty = localStorage.getItem('difficulty') || 'hard';
+let cpuThinking = false;
+let cpuTimeoutId = null;
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -93,6 +102,7 @@ function saveName(player, value) {
 }
 
 function getPlayerName(player) {
+  if (gameMode === 'pve' && player === 'O') return 'CPU';
   const saved = localStorage.getItem('name' + player);
   return saved && saved.trim() ? saved.trim() : getDefaultName(player);
 }
@@ -116,7 +126,7 @@ function updateStatus() {
 
 function setNamesDisabled(disabled) {
   nameXInput.disabled = disabled;
-  nameOInput.disabled = disabled;
+  nameOInput.disabled = disabled || gameMode === 'pve';
 }
 
 function updateScoreDisplay() {
@@ -137,7 +147,12 @@ function handleCellClick(e) {
   const cell = e.target;
   const index = cell.dataset.index;
 
-  if (!gameActive || gameState[index] !== '') return;
+  if (!gameActive || gameState[index] !== '' || cpuThinking) return;
+  if (gameMode === 'pve' && currentPlayer === 'O') return;
+
+  if (gameState.every(cell => cell === '')) {
+    showModeUI(false);
+  }
 
   gameState[index] = currentPlayer;
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
@@ -151,6 +166,10 @@ function handleCellClick(e) {
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+
+  if (gameMode === 'pve' && currentPlayer === 'O') {
+    triggerCPUMove();
+  }
 }
 
 function getCellCenter(index) {
@@ -162,6 +181,118 @@ function getCellCenter(index) {
     x: col * (cellSize + gap) + cellSize / 2,
     y: row * (cellSize + gap) + cellSize / 2,
   };
+}
+
+function getAvailableMoves(board) {
+  return board.reduce((moves, cell, i) => {
+    if (cell === '') moves.push(i);
+    return moves;
+  }, []);
+}
+
+function checkWinner(board) {
+  for (const pattern of winPatterns) {
+    const [a, b, c] = pattern;
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return board[a];
+    }
+  }
+  return null;
+}
+
+function isBoardFull(board) {
+  return board.every(cell => cell !== '');
+}
+
+function minimax(board, depth, isMaximizing, alpha, beta, maxDepth) {
+  const winner = checkWinner(board);
+  if (winner === 'O') return 10 - depth;
+  if (winner === 'X') return depth - 10;
+  if (isBoardFull(board)) return 0;
+  if (maxDepth !== undefined && depth >= maxDepth) return 0;
+
+  const moves = getAvailableMoves(board);
+
+  if (isMaximizing) {
+    let best = -Infinity;
+    for (const i of moves) {
+      board[i] = 'O';
+      const score = minimax(board, depth + 1, false, alpha, beta, maxDepth);
+      board[i] = '';
+      best = Math.max(best, score);
+      alpha = Math.max(alpha, score);
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const i of moves) {
+      board[i] = 'X';
+      const score = minimax(board, depth + 1, true, alpha, beta, maxDepth);
+      board[i] = '';
+      best = Math.min(best, score);
+      beta = Math.min(beta, score);
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+function getBestMove(board, difficulty) {
+  const moves = getAvailableMoves(board);
+
+  if (difficulty === 'easy') {
+    return moves[Math.floor(Math.random() * moves.length)];
+  }
+
+  const maxDepth = difficulty === 'medium' ? 3 : undefined;
+  let bestScore = -Infinity;
+  let bestMove = moves[0];
+
+  for (const i of moves) {
+    board[i] = 'O';
+    const score = minimax(board, 0, false, -Infinity, Infinity, maxDepth);
+    board[i] = '';
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = i;
+    }
+  }
+
+  return bestMove;
+}
+
+function triggerCPUMove() {
+  cpuThinking = true;
+  status.textContent = `${getPlayerName('O')} is thinking...`;
+  cpuTimeoutId = setTimeout(() => {
+    const index = getBestMove([...gameState], difficulty);
+    if (!gameActive || index === undefined) {
+      cpuThinking = false;
+      return;
+    }
+
+    gameState[index] = 'O';
+    const cell = cells[index];
+    cell.innerHTML = SVG_O;
+    cell.classList.add('o');
+    setNamesDisabled(true);
+
+    audio.playMove();
+
+    if (checkWin()) {
+      cpuThinking = false;
+      return;
+    }
+    if (checkDraw()) {
+      cpuThinking = false;
+      return;
+    }
+
+    currentPlayer = 'X';
+    status.textContent = `${getPlayerName('X')}'s turn`;
+    cpuThinking = false;
+  }, 400);
 }
 
 function drawWinLine(pattern, color) {
@@ -212,6 +343,7 @@ function checkWin() {
       const style = getComputedStyle(document.documentElement);
       const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
       drawWinLine(pattern, winColor);
+      showModeUI(true);
       return true;
     }
   }
@@ -224,6 +356,7 @@ function checkDraw() {
     audio.playDraw();
     status.textContent = "It's a draw!";
     saveGameHistory('Draw');
+    showModeUI(true);
     return true;
   }
   return false;
@@ -233,7 +366,13 @@ function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
+  cpuThinking = false;
+  if (cpuTimeoutId) {
+    clearTimeout(cpuTimeoutId);
+    cpuTimeoutId = null;
+  }
   status.textContent = `${getPlayerName('X')}'s turn`;
+  showModeUI(true);
   setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
@@ -305,6 +444,49 @@ function clearHistory() {
   renderHistory();
 }
 
+function showModeUI(show) {
+  modeSelector.style.display = show ? 'flex' : 'none';
+  if (gameMode === 'pve') {
+    difficultySelector.style.display = show ? 'flex' : 'none';
+  } else {
+    difficultySelector.style.display = 'none';
+  }
+}
+
+function setMode(mode) {
+  gameMode = mode;
+  modeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+  if (mode === 'pve') {
+    difficultySelector.style.display = 'flex';
+    nameOInput.value = 'CPU';
+    nameOInput.disabled = true;
+  } else {
+    difficultySelector.style.display = 'none';
+    nameOInput.value = loadName('O');
+    nameOInput.disabled = false;
+  }
+  if (!gameActive) resetGame();
+}
+
+function setDifficulty(diff) {
+  difficulty = diff;
+  localStorage.setItem('difficulty', diff);
+  diffBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.diff === diff));
+}
+
+modeBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    setMode(btn.dataset.mode);
+    resetGame();
+  });
+});
+
+diffBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    setDifficulty(btn.dataset.diff);
+  });
+});
+
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   themeToggle.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}\u{FE0F}';
@@ -332,5 +514,9 @@ themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
 
-triggerBoardEnter();
+showModeUI(true);
+setMode('pvp');
+setDifficulty(difficulty);
+updateStatus();
 renderHistory();
+triggerBoardEnter();
