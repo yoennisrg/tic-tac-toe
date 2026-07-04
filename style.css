@@ -14,6 +14,12 @@
   --glass-shadow: rgba(0, 0, 0, 0.4);
   --color-x: #38bdf8;
   --color-o: #fb7185;
+  --timer-neutral: rgba(255, 255, 255, 0.5);
+  --timer-yellow: #facc15;
+  --timer-red: #ef4444;
+  --settings-bg: #1a1a2e;
+  --settings-border: rgba(255, 255, 255, 0.12);
+  --overlay-bg: rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="light"] {
@@ -32,6 +38,12 @@
   --glass-shadow: rgba(0, 0, 0, 0.08);
   --color-x: #0284c7;
   --color-o: #e11d48;
+  --timer-neutral: rgba(0, 0, 0, 0.25);
+  --timer-yellow: #ca8a04;
+  --timer-red: #dc2626;
+  --settings-bg: #f0f2f5;
+  --settings-border: rgba(0, 0, 0, 0.12);
+  --overlay-bg: rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -107,16 +119,222 @@ h1 {
   cursor: not-allowed;
 }
 
+.mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.mode-btn {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 2px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--cell-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, var(--btn-bg-start), var(--btn-bg-end));
+  color: #fff;
+  border-color: transparent;
+}
+
+.mode-btn:hover:not(.active) {
+  background: var(--cell-hover);
+}
+
+.difficulty-selector {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.diff-btn {
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 2px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--cell-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diff-btn.active {
+  background: linear-gradient(135deg, var(--btn-bg-start), var(--btn-bg-end));
+  color: #fff;
+  border-color: transparent;
+}
+
+.diff-btn:hover:not(.active) {
+  background: var(--cell-hover);
+}
+
 .names .vs {
   font-size: 0.9rem;
   color: #888;
   font-weight: 600;
 }
 
-.status {
-  font-size: 1.25rem;
+.turn-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2.5rem;
+  margin-bottom: 0.25rem;
+  padding: 0.5rem 0;
+}
+
+.player-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.player-token {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  background: var(--cell-bg);
+  position: relative;
+}
+
+.token-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.token-svg line,
+.token-svg circle:not(.timer-track):not(.timer-ring) {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.timer-track {
+  fill: none;
+  stroke: var(--toggle-bg);
+  stroke-width: 3;
+}
+
+.timer-ring {
+  fill: none;
+  stroke: var(--timer-neutral);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke 0.3s ease;
+  stroke-dasharray: 263.89;
+  stroke-dashoffset: 263.89;
+}
+
+.player-indicator[data-player="X"] .timer-ring {
+  stroke: var(--timer-neutral);
+}
+
+.player-indicator[data-player="O"] .timer-ring {
+  stroke: var(--timer-neutral);
+}
+
+.player-indicator[data-player="X"] .player-token {
+  color: var(--color-x);
+}
+
+.player-indicator[data-player="O"] .player-token {
+  color: var(--color-o);
+}
+
+.player-indicator.active .player-token {
+  transform: scale(1.15);
+  box-shadow: 0 0 8px currentColor, 0 0 20px currentColor;
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+.player-indicator.inactive {
+  opacity: 0.4;
+}
+
+.player-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.player-indicator.inactive .player-label {
+  opacity: 0.7;
+}
+
+.winner-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  z-index: 2;
+}
+
+.player-indicator.winner .winner-badge {
+  display: flex;
+}
+
+.player-indicator.winner .player-token {
+  animation: none;
+  transform: scale(1.15);
+  box-shadow: 0 0 12px currentColor;
+}
+
+.player-indicator.winner {
+  opacity: 1;
+}
+
+.turn-subtitle {
+  font-size: 1rem;
+  color: #888;
   margin-bottom: 1.5rem;
-  min-height: 2rem;
+  min-height: 1.5rem;
+  font-weight: 500;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px currentColor, 0 0 14px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 14px currentColor, 0 0 28px currentColor;
+  }
 }
 
 .board {
@@ -335,6 +553,170 @@ h1 {
 
 .top-btn:hover {
   transform: scale(1.1);
+}
+
+/* Settings panel */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.settings-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settings-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: var(--settings-bg);
+  border: 1px solid var(--settings-border);
+  border-radius: 16px;
+  padding: 0;
+  width: min(90%, 340px);
+  z-index: 101;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+}
+
+.settings-panel.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--settings-border);
+}
+
+.settings-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.settings-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--cell-bg);
+  color: var(--text);
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.settings-close:hover {
+  background: var(--cell-hover);
+}
+
+.settings-body {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.settings-row span {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--toggle-bg);
+  border-radius: 24px;
+  transition: background 0.3s;
+}
+
+.slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--text);
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.switch input:checked + .slider {
+  background: linear-gradient(135deg, var(--btn-bg-start), var(--btn-bg-end));
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(20px);
+  background: #fff;
+}
+
+/* Duration buttons */
+.duration-options {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.duration-btn {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 2px solid var(--settings-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: inherit;
+}
+
+.duration-btn.active {
+  background: linear-gradient(135deg, var(--btn-bg-start), var(--btn-bg-end));
+  color: #fff;
+  border-color: transparent;
+}
+
+.duration-btn:hover:not(.active) {
+  background: var(--cell-hover);
 }
 
 @keyframes cell-enter {

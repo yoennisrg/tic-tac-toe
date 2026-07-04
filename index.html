@@ -11,17 +11,76 @@
 </head>
 <body>
   <div class="top-buttons">
-    <button class="top-btn mute-toggle" id="muteToggle" aria-label="Toggle sound">🔊</button>
-    <button class="top-btn theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
+    <button class="top-btn" id="settingsToggle" aria-label="Settings">&#x2699;</button>
+    <button class="top-btn" id="muteToggle" aria-label="Toggle sound">&#x1F50A;</button>
+    <button class="top-btn" id="themeToggle" aria-label="Toggle theme"></button>
+  </div>
+  <div class="settings-overlay" id="settingsOverlay"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+      <h2>Settings</h2>
+      <button class="settings-close" id="settingsClose">&times;</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-row">
+        <span>Countdown Timer</span>
+        <label class="switch">
+          <input type="checkbox" id="timerToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="settings-row" id="timerDurationRow">
+        <span>Timer Duration</span>
+        <div class="duration-options">
+          <button class="duration-btn" data-duration="5">5s</button>
+          <button class="duration-btn active" data-duration="10">10s</button>
+          <button class="duration-btn" data-duration="15">15s</button>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="container">
     <h1>Tic-Tac-Toe</h1>
+    <div class="mode-selector" id="modeSelector">
+      <button class="mode-btn active" data-mode="pvp">2 Players</button>
+      <button class="mode-btn" data-mode="pve">vs CPU</button>
+    </div>
+    <div class="difficulty-selector" id="difficultySelector">
+      <button class="diff-btn active" data-diff="easy">Easy</button>
+      <button class="diff-btn" data-diff="medium">Medium</button>
+      <button class="diff-btn" data-diff="hard">Hard</button>
+    </div>
     <div class="names">
       <input type="text" id="nameX" value="Player X" maxlength="20" spellcheck="false">
       <span class="vs">vs</span>
       <input type="text" id="nameO" value="Player O" maxlength="20" spellcheck="false">
     </div>
-    <div class="status" id="status">Player X's turn</div>
+    <div class="turn-indicator" id="turnIndicator">
+      <div class="player-indicator active" data-player="X">
+        <div class="player-token">
+          <svg viewBox="0 0 100 100" class="token-svg">
+            <circle class="timer-track" cx="50" cy="50" r="42" />
+            <circle class="timer-ring" cx="50" cy="50" r="42" />
+            <line x1="20" y1="20" x2="80" y2="80"/>
+            <line x1="80" y1="20" x2="20" y2="80"/>
+          </svg>
+        </div>
+        <div class="player-label" id="labelX">Player X</div>
+        <span class="winner-badge">&#x2713;</span>
+      </div>
+      <div class="player-indicator" data-player="O">
+        <div class="player-token">
+          <svg viewBox="0 0 100 100" class="token-svg">
+            <circle class="timer-track" cx="50" cy="50" r="42" />
+            <circle class="timer-ring" cx="50" cy="50" r="42" />
+            <circle cx="50" cy="50" r="30"/>
+          </svg>
+        </div>
+        <div class="player-label" id="labelO">Player O</div>
+        <span class="winner-badge">&#x2713;</span>
+      </div>
+    </div>
+    <div class="turn-subtitle" id="turnSubtitle">Player X's turn</div>
     <div class="board" id="board">
       <div class="cell" data-index="0"></div>
       <div class="cell" data-index="1"></div>
