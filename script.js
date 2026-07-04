@@ -109,6 +109,64 @@ function onNameInput(player, input) {
 nameXInput.addEventListener('input', () => onNameInput('X', nameXInput));
 nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
 
+function getCellLabel(index) {
+  const row = Math.floor(index / 3) + 1;
+  const col = (index % 3) + 1;
+  const content = gameState[index] || 'empty';
+  return `Row ${row}, Column ${col}, ${content}`;
+}
+
+function updateCellLabels() {
+  cells.forEach((cell, i) => {
+    cell.setAttribute('aria-label', getCellLabel(i));
+  });
+}
+
+function setFocusedCell(index) {
+  cells.forEach((cell, i) => {
+    cell.setAttribute('tabindex', i === index ? '0' : '-1');
+  });
+}
+
+function handleBoardKeydown(e) {
+  const cell = e.target.closest('.cell');
+  if (!cell) return;
+
+  const index = parseInt(cell.dataset.index);
+  let newIndex = -1;
+
+  switch (e.key) {
+    case 'ArrowUp':
+      newIndex = index - 3;
+      e.preventDefault();
+      break;
+    case 'ArrowDown':
+      newIndex = index + 3;
+      e.preventDefault();
+      break;
+    case 'ArrowLeft':
+      if (index % 3 > 0) newIndex = index - 1;
+      e.preventDefault();
+      break;
+    case 'ArrowRight':
+      if (index % 3 < 2) newIndex = index + 1;
+      e.preventDefault();
+      break;
+    case 'Enter':
+    case ' ':
+      e.preventDefault();
+      handleCellClick({ target: cell });
+      return;
+    default:
+      return;
+  }
+
+  if (newIndex >= 0 && newIndex < 9) {
+    setFocusedCell(newIndex);
+    cells[newIndex].focus();
+  }
+}
+
 function updateStatus() {
   if (!gameActive) return;
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
@@ -142,6 +200,7 @@ function handleCellClick(e) {
   gameState[index] = currentPlayer;
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
+  cell.setAttribute('aria-label', getCellLabel(index));
   setNamesDisabled(true);
 
   audio.playMove();
@@ -239,6 +298,7 @@ function resetGame() {
     cell.textContent = '';
     cell.classList.remove('x', 'o', 'win');
   });
+  updateCellLabels();
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -324,6 +384,15 @@ muteToggle.textContent = audio.muted ? '\u{1F507}' : '\u{1F50A}';
 function toggleMute() {
   audio.muted = !audio.muted;
 }
+
+cells.forEach(cell => {
+  cell.setAttribute('role', 'gridcell');
+  cell.setAttribute('tabindex', '-1');
+});
+cells[0].setAttribute('tabindex', '0');
+updateCellLabels();
+
+board.addEventListener('keydown', handleBoardKeydown);
 
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
 resetBtn.addEventListener('click', resetGame);

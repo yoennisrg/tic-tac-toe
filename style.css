@@ -156,6 +156,16 @@ h1 {
   background: var(--cell-hover);
 }
 
+.cell:focus-visible {
+  outline: 3px solid var(--color-x);
+  outline-offset: -3px;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+[data-theme="light"] .cell:focus-visible {
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+}
+
 @media (max-width: 480px) {
   .container {
     padding: 1.5rem 0.75rem;
