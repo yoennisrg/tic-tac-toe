@@ -21,8 +21,32 @@
       <span class="vs">vs</span>
       <input type="text" id="nameO" value="Player O" maxlength="20" spellcheck="false">
     </div>
+    <div id="seriesSetup" class="series-setup">
+      <div class="series-setup-label">Match Format</div>
+      <div class="series-buttons">
+        <button class="series-btn" data-length="3">Best of 3</button>
+        <button class="series-btn" data-length="5">Best of 5</button>
+        <button class="series-btn" data-length="7">Best of 7</button>
+      </div>
+    </div>
+    <div id="seriesProgress" class="series-progress hidden">
+      <div class="series-progress-label">Match Progress</div>
+      <div class="series-progress-bars">
+        <div class="series-progress-player">
+          <span class="series-progress-name" id="seriesNameX"></span>
+          <div class="series-dots" id="seriesDotsX"></div>
+        </div>
+        <div class="series-progress-player">
+          <span class="series-progress-name" id="seriesNameO"></span>
+          <div class="series-dots" id="seriesDotsO"></div>
+        </div>
+      </div>
+    </div>
     <div class="status" id="status">Player X's turn</div>
     <div class="board" id="board">
+      <div id="resultOverlay" class="result-overlay hidden">
+        <div class="result-overlay-content" id="resultOverlayContent"></div>
+      </div>
       <div class="cell" data-index="0"></div>
       <div class="cell" data-index="1"></div>
       <div class="cell" data-index="2"></div>
@@ -33,6 +57,11 @@
       <div class="cell" data-index="7"></div>
       <div class="cell" data-index="8"></div>
       <canvas id="winCanvas"></canvas>
+    </div>
+    <div id="matchOver" class="match-over hidden">
+      <div class="match-over-winner" id="matchOverWinner"></div>
+      <div class="match-over-score" id="matchOverScore"></div>
+      <button id="rematchBtn" class="reset">Rematch</button>
     </div>
     <div class="score" id="score">X: 0 | O: 0</div>
     <button class="reset" id="reset">New Game</button>

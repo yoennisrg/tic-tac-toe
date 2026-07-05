@@ -66,6 +66,27 @@ let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
 
+let seriesLength = 3;
+let seriesWinsX = 0;
+let seriesWinsO = 0;
+let seriesActive = false;
+let seriesMatchOver = false;
+let seriesInterstitial = false;
+let seriesTimer = null;
+
+const seriesSetup = document.getElementById('seriesSetup');
+const seriesProgress = document.getElementById('seriesProgress');
+const seriesDotsX = document.getElementById('seriesDotsX');
+const seriesDotsO = document.getElementById('seriesDotsO');
+const seriesNameXEl = document.getElementById('seriesNameX');
+const seriesNameOEl = document.getElementById('seriesNameO');
+const resultOverlay = document.getElementById('resultOverlay');
+const resultOverlayContent = document.getElementById('resultOverlayContent');
+const matchOver = document.getElementById('matchOver');
+const matchOverWinner = document.getElementById('matchOverWinner');
+const matchOverScore = document.getElementById('matchOverScore');
+const rematchBtn = document.getElementById('rematchBtn');
+
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
   canvas.height = board.offsetHeight;
@@ -109,6 +130,176 @@ function onNameInput(player, input) {
 nameXInput.addEventListener('input', () => onNameInput('X', nameXInput));
 nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
 
+// --- Series/Tournament ---
+
+function loadSeriesState() {
+  try {
+    const data = JSON.parse(localStorage.getItem('seriesState'));
+    if (data && data.seriesActive) {
+      seriesLength = data.seriesLength || 3;
+      seriesWinsX = data.seriesWinsX || 0;
+      seriesWinsO = data.seriesWinsO || 0;
+      seriesActive = true;
+      seriesMatchOver = data.seriesMatchOver || false;
+      return true;
+    }
+  } catch (e) { /* ignore */ }
+  return false;
+}
+
+function saveSeriesState() {
+  localStorage.setItem('seriesState', JSON.stringify({
+    seriesLength,
+    seriesWinsX,
+    seriesWinsO,
+    seriesActive,
+    seriesMatchOver,
+  }));
+}
+
+function clearSeriesState() {
+  localStorage.removeItem('seriesState');
+}
+
+function getNeededWins() {
+  return Math.floor(seriesLength / 2) + 1;
+}
+
+function startSeries(length) {
+  seriesLength = length;
+  seriesWinsX = 0;
+  seriesWinsO = 0;
+  seriesActive = true;
+  seriesMatchOver = false;
+  seriesInterstitial = false;
+  if (seriesTimer) clearTimeout(seriesTimer);
+  seriesTimer = null;
+
+  currentPlayer = 'X';
+  gameState = ['', '', '', '', '', '', '', '', ''];
+  gameActive = true;
+  setNamesDisabled(true);
+  cells.forEach(cell => {
+    cell.textContent = '';
+    cell.classList.remove('x', 'o', 'win');
+  });
+  if (winAnimId) cancelAnimationFrame(winAnimId);
+  winAnimId = null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  seriesSetup.classList.add('hidden');
+  seriesProgress.classList.remove('hidden');
+  matchOver.classList.add('hidden');
+  resultOverlay.classList.add('hidden');
+  document.getElementById('reset').classList.add('hidden');
+  updateStatus();
+  updateSeriesUI();
+  saveSeriesState();
+  triggerBoardEnter();
+}
+
+function updateSeriesUI() {
+  const needed = getNeededWins();
+
+  seriesNameXEl.textContent = getPlayerName('X');
+  seriesNameOEl.textContent = getPlayerName('O');
+
+  seriesDotsX.innerHTML = '';
+  seriesDotsO.innerHTML = '';
+  for (let i = 0; i < needed; i++) {
+    const dotX = document.createElement('span');
+    dotX.className = 'progress-dot' + (i < seriesWinsX ? ' filled' : '');
+    dotX.style.setProperty('--dot-color', 'var(--color-x)');
+    seriesDotsX.appendChild(dotX);
+
+    const dotO = document.createElement('span');
+    dotO.className = 'progress-dot' + (i < seriesWinsO ? ' filled' : '');
+    dotO.style.setProperty('--dot-color', 'var(--color-o)');
+    seriesDotsO.appendChild(dotO);
+  }
+}
+
+function endMatch() {
+  seriesMatchOver = true;
+  gameActive = false;
+  saveSeriesState();
+
+  const needed = getNeededWins();
+  const winner = seriesWinsX >= needed ? 'X' : 'O';
+  const winnerName = getPlayerName(winner);
+  const loserName = winner === 'X' ? getPlayerName('O') : getPlayerName('X');
+  const winnerScore = winner === 'X' ? seriesWinsX : seriesWinsO;
+  const loserScore = winner === 'X' ? seriesWinsO : seriesWinsX;
+
+  matchOver.classList.remove('hidden');
+  matchOverWinner.textContent = `${winnerName} wins the match!`;
+  matchOverScore.textContent = `${winnerScore} — ${loserScore}`;
+  status.textContent = `${winnerName} wins the match!`;
+  updateSeriesUI();
+}
+
+function handleSeriesGameEnd() {
+  if (!seriesActive) return;
+
+  seriesInterstitial = true;
+  saveSeriesState();
+
+  const needed = getNeededWins();
+
+  if (seriesWinsX >= needed || seriesWinsO >= needed) {
+    endMatch();
+    return;
+  }
+
+  if (seriesTimer) clearTimeout(seriesTimer);
+  seriesTimer = setTimeout(() => {
+    seriesInterstitial = false;
+    seriesTimer = null;
+    currentPlayer = 'X';
+    gameState = ['', '', '', '', '', '', '', '', ''];
+    gameActive = true;
+    setNamesDisabled(true);
+    cells.forEach(cell => {
+      cell.textContent = '';
+      cell.classList.remove('x', 'o', 'win');
+    });
+    if (winAnimId) cancelAnimationFrame(winAnimId);
+    winAnimId = null;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    status.textContent = `${getPlayerName('X')}'s turn`;
+    updateSeriesUI();
+    saveSeriesState();
+    triggerBoardEnter();
+  }, 2000);
+}
+
+function rematch() {
+  startSeries(seriesLength);
+}
+
+function cancelSeries() {
+  clearSeriesState();
+  seriesActive = false;
+  seriesMatchOver = false;
+  seriesInterstitial = false;
+  if (seriesTimer) clearTimeout(seriesTimer);
+  seriesTimer = null;
+  seriesWinsX = 0;
+  seriesWinsO = 0;
+  seriesSetup.classList.remove('hidden');
+  seriesProgress.classList.add('hidden');
+  matchOver.classList.add('hidden');
+  resultOverlay.classList.add('hidden');
+  document.getElementById('reset').classList.remove('hidden');
+  resetGame();
+}
+
+document.querySelectorAll('.series-btn').forEach(btn => {
+  btn.addEventListener('click', () => startSeries(parseInt(btn.dataset.length)));
+});
+
+rematchBtn.addEventListener('click', rematch);
+
 function updateStatus() {
   if (!gameActive) return;
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
@@ -137,7 +328,7 @@ function handleCellClick(e) {
   const cell = e.target;
   const index = cell.dataset.index;
 
-  if (!gameActive || gameState[index] !== '') return;
+  if (!gameActive || gameState[index] !== '' || seriesInterstitial) return;
 
   gameState[index] = currentPlayer;
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
@@ -212,6 +403,11 @@ function checkWin() {
       const style = getComputedStyle(document.documentElement);
       const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
       drawWinLine(pattern, winColor);
+      if (seriesActive) {
+        if (currentPlayer === 'X') seriesWinsX++; else seriesWinsO++;
+        updateSeriesUI();
+        handleSeriesGameEnd();
+      }
       return true;
     }
   }
@@ -224,6 +420,9 @@ function checkDraw() {
     audio.playDraw();
     status.textContent = "It's a draw!";
     saveGameHistory('Draw');
+    if (seriesActive) {
+      handleSeriesGameEnd();
+    }
     return true;
   }
   return false;
@@ -331,6 +530,29 @@ resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
+
+if (loadSeriesState()) {
+  seriesSetup.classList.add('hidden');
+  seriesProgress.classList.remove('hidden');
+  document.getElementById('reset').classList.add('hidden');
+  if (seriesMatchOver) {
+    endMatch();
+  } else {
+    currentPlayer = 'X';
+    gameState = ['', '', '', '', '', '', '', '', ''];
+    gameActive = true;
+    setNamesDisabled(true);
+    cells.forEach(cell => {
+      cell.textContent = '';
+      cell.classList.remove('x', 'o', 'win');
+    });
+    if (winAnimId) cancelAnimationFrame(winAnimId);
+    winAnimId = null;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    updateStatus();
+    updateSeriesUI();
+  }
+}
 
 triggerBoardEnter();
 renderHistory();
