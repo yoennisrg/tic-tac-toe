@@ -1,6 +1,7 @@
 const board = document.getElementById('board');
 const cells = document.querySelectorAll('.cell');
 const status = document.getElementById('status');
+const undoBtn = document.getElementById('undoBtn');
 const resetBtn = document.getElementById('reset');
 const resetScoreBtn = document.getElementById('resetScore');
 const scoreDisplay = document.getElementById('score');
@@ -65,6 +66,8 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let moveHistory = [];
+let undoActive = false;
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -137,8 +140,9 @@ function handleCellClick(e) {
   const cell = e.target;
   const index = cell.dataset.index;
 
-  if (!gameActive || gameState[index] !== '') return;
+  if (!gameActive || gameState[index] !== '' || undoActive) return;
 
+  moveHistory.push(index);
   gameState[index] = currentPlayer;
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
@@ -151,6 +155,7 @@ function handleCellClick(e) {
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  updateUndoButton();
 }
 
 function getCellCenter(index) {
@@ -162,6 +167,52 @@ function getCellCenter(index) {
     x: col * (cellSize + gap) + cellSize / 2,
     y: row * (cellSize + gap) + cellSize / 2,
   };
+}
+
+function updateUndoButton() {
+  undoBtn.disabled = !gameActive || moveHistory.length === 0;
+}
+
+function undoLastMove() {
+  if (!gameActive || moveHistory.length === 0 || undoActive) return;
+
+  const isCPUMode = typeof gameMode !== 'undefined' && gameMode === 'pve';
+  let indicesToUndo = [];
+
+  if (isCPUMode && moveHistory.length >= 2) {
+    indicesToUndo.push(moveHistory.pop());
+    indicesToUndo.push(moveHistory.pop());
+  } else if (!isCPUMode) {
+    indicesToUndo.push(moveHistory.pop());
+  } else {
+    return;
+  }
+
+  undoActive = true;
+
+  indicesToUndo.forEach(i => { gameState[i] = ''; });
+
+  indicesToUndo.forEach(i => {
+    cells[i].classList.add('undo-fade');
+  });
+
+  setTimeout(() => {
+    indicesToUndo.forEach(i => {
+      const cell = cells[i];
+      cell.textContent = '';
+      cell.classList.remove('x', 'o', 'win', 'undo-fade');
+    });
+    undoActive = false;
+  }, 280);
+
+  if (isCPUMode) {
+    currentPlayer = 'X';
+  } else {
+    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+  }
+
+  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  updateUndoButton();
 }
 
 function drawWinLine(pattern, color) {
@@ -212,6 +263,7 @@ function checkWin() {
       const style = getComputedStyle(document.documentElement);
       const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
       drawWinLine(pattern, winColor);
+      updateUndoButton();
       return true;
     }
   }
@@ -224,6 +276,7 @@ function checkDraw() {
     audio.playDraw();
     status.textContent = "It's a draw!";
     saveGameHistory('Draw');
+    updateUndoButton();
     return true;
   }
   return false;
@@ -233,15 +286,18 @@ function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
+  moveHistory = [];
+  undoActive = false;
   status.textContent = `${getPlayerName('X')}'s turn`;
   setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
-    cell.classList.remove('x', 'o', 'win');
+    cell.classList.remove('x', 'o', 'win', 'undo-fade');
   });
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updateUndoButton();
   triggerBoardEnter();
 }
 
@@ -326,6 +382,7 @@ function toggleMute() {
 }
 
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+undoBtn.addEventListener('click', undoLastMove);
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
@@ -333,4 +390,5 @@ muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
 
 triggerBoardEnter();
+updateUndoButton();
 renderHistory();

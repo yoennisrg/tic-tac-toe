@@ -14,6 +14,8 @@
   --glass-shadow: rgba(0, 0, 0, 0.4);
   --color-x: #38bdf8;
   --color-o: #fb7185;
+  --btn-undo-bg-start: #f59e0b;
+  --btn-undo-bg-end: #d97706;
 }
 
 [data-theme="light"] {
@@ -215,6 +217,24 @@ h1 {
   to { stroke-dashoffset: 0; }
 }
 
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.undo-btn {
+  background: linear-gradient(135deg, var(--btn-undo-bg-start), var(--btn-undo-bg-end));
+}
+
+.undo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .reset {
   padding: 0.75rem 2rem;
   font-size: 0.85rem;
@@ -348,9 +368,20 @@ h1 {
   }
 }
 
+@keyframes cell-fade-out {
+  to {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .board.entered .cell {
     animation: cell-enter 0.4s ease-out forwards;
+  }
+
+  .cell.undo-fade {
+    animation: cell-fade-out 0.25s ease-out forwards;
   }
 
   .cell:hover {
@@ -361,5 +392,12 @@ h1 {
   .reset:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.undo-fade {
+    opacity: 0;
+    transition: opacity 0.15s;
   }
 }
