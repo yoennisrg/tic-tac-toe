@@ -1,5 +1,4 @@
 const board = document.getElementById('board');
-const cells = document.querySelectorAll('.cell');
 const status = document.getElementById('status');
 const resetBtn = document.getElementById('reset');
 const resetScoreBtn = document.getElementById('resetScore');
@@ -10,6 +9,8 @@ const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistory');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
+const sizeBtns = document.querySelectorAll('.size-btn');
+const cpuCheckbox = document.getElementById('cpuCheckbox');
 
 const audio = {
   ctx: null,
@@ -61,17 +62,101 @@ const audio = {
 const SVG_X = '<svg class="symbol" viewBox="0 0 100 100"><line class="x-line" x1="20" y1="20" x2="80" y2="80"/><line class="x-line" x1="80" y1="20" x2="20" y2="80"/></svg>';
 const SVG_O = '<svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle" cx="50" cy="50" r="30"/></svg>';
 
+let boardSize = parseInt(localStorage.getItem('boardSize') || '3');
 let currentPlayer = 'X';
-let gameState = ['', '', '', '', '', '', '', '', ''];
+let gameState = [];
 let gameActive = true;
 let winAnimId = null;
+let winPatterns = [];
+let isCpuMode = localStorage.getItem('cpuMode') === 'true';
+let cpuThinking = false;
+
+function getWinLen() {
+  return boardSize === 3 ? 3 : 4;
+}
+
+function generateWinPatterns(size, winLen) {
+  const patterns = [];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c <= size - winLen; c++) {
+      const p = [];
+      for (let i = 0; i < winLen; i++) p.push(r * size + c + i);
+      patterns.push(p);
+    }
+  }
+  for (let r = 0; r <= size - winLen; r++) {
+    for (let c = 0; c < size; c++) {
+      const p = [];
+      for (let i = 0; i < winLen; i++) p.push((r + i) * size + c);
+      patterns.push(p);
+    }
+  }
+  for (let r = 0; r <= size - winLen; r++) {
+    for (let c = 0; c <= size - winLen; c++) {
+      const p = [];
+      for (let i = 0; i < winLen; i++) p.push((r + i) * size + c + i);
+      patterns.push(p);
+    }
+  }
+  for (let r = 0; r <= size - winLen; r++) {
+    for (let c = winLen - 1; c < size; c++) {
+      const p = [];
+      for (let i = 0; i < winLen; i++) p.push((r + i) * size + c - i);
+      patterns.push(p);
+    }
+  }
+  return patterns;
+}
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
   canvas.height = board.offsetHeight;
 }
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+
+function getCellCenter(index) {
+  const size = boardSize;
+  const col = index % size;
+  const row = Math.floor(index / size);
+  const boardWidth = board.offsetWidth;
+  const gap = 6;
+  const totalGaps = (size - 1) * gap;
+  const cellSize = (boardWidth - totalGaps) / size;
+  return {
+    x: col * (cellSize + gap) + cellSize / 2,
+    y: row * (cellSize + gap) + cellSize / 2,
+  };
+}
+
+function drawWinLine(pattern, color) {
+  const start = getCellCenter(pattern[0]);
+  const end = getCellCenter(pattern[pattern.length - 1]);
+  const duration = 400;
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(
+      start.x + (end.x - start.x) * progress,
+      start.y + (end.y - start.y) * progress,
+    );
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    if (progress < 1) {
+      winAnimId = requestAnimationFrame(animate);
+    }
+  }
+
+  winAnimId = requestAnimationFrame(animate);
+}
+
 let scoreX = parseInt(localStorage.getItem('scoreX') || '0');
 let scoreO = parseInt(localStorage.getItem('scoreO') || '0');
 let roundNumber = parseInt(localStorage.getItem('roundNumber') || '0');
@@ -109,14 +194,14 @@ function onNameInput(player, input) {
 nameXInput.addEventListener('input', () => onNameInput('X', nameXInput));
 nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
 
-function updateStatus() {
-  if (!gameActive) return;
-  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
-}
-
 function setNamesDisabled(disabled) {
   nameXInput.disabled = disabled;
   nameOInput.disabled = disabled;
+}
+
+function updateStatus() {
+  if (!gameActive) return;
+  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
 }
 
 function updateScoreDisplay() {
@@ -125,21 +210,10 @@ function updateScoreDisplay() {
     <span class="score-badge score-badge--o">${getPlayerName('O')}: ${scoreO}</span>
   `;
 }
-updateScoreDisplay();
 
-const winPatterns = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8],
-  [0, 3, 6], [1, 4, 7], [2, 5, 8],
-  [0, 4, 8], [2, 4, 6]
-];
-
-function handleCellClick(e) {
-  const cell = e.target;
-  const index = cell.dataset.index;
-
-  if (!gameActive || gameState[index] !== '') return;
-
+function makeMove(index) {
   gameState[index] = currentPlayer;
+  const cell = board.querySelector(`.cell[data-index="${index}"]`);
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
   setNamesDisabled(true);
@@ -153,55 +227,33 @@ function handleCellClick(e) {
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
 }
 
-function getCellCenter(index) {
-  const col = index % 3;
-  const row = Math.floor(index / 3);
-  const cellSize = (board.offsetWidth - 12) / 3;
-  const gap = 6;
-  return {
-    x: col * (cellSize + gap) + cellSize / 2,
-    y: row * (cellSize + gap) + cellSize / 2,
-  };
-}
+function handleCellClick(e) {
+  const cell = e.target.closest('.cell');
+  if (!cell) return;
+  const index = parseInt(cell.dataset.index);
 
-function drawWinLine(pattern, color) {
-  const start = getCellCenter(pattern[0]);
-  const end = getCellCenter(pattern[2]);
-  const duration = 400;
-  const startTime = performance.now();
+  if (!gameActive || gameState[index] !== '' || cpuThinking) return;
+  if (isCpuMode && currentPlayer === 'O') return;
 
-  function animate(currentTime) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
+  makeMove(index);
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    ctx.lineTo(
-      start.x + (end.x - start.x) * progress,
-      start.y + (end.y - start.y) * progress,
-    );
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    if (progress < 1) {
-      winAnimId = requestAnimationFrame(animate);
-    }
+  if (gameActive && isCpuMode) {
+    cpuThinking = true;
+    setTimeout(() => {
+      cpuMove();
+      cpuThinking = false;
+    }, 300);
   }
-
-  winAnimId = requestAnimationFrame(animate);
 }
 
 function checkWin() {
   for (const pattern of winPatterns) {
-    const [a, b, c] = pattern;
-    if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+    if (gameState[pattern[0]] && pattern.every(i => gameState[i] === gameState[pattern[0]])) {
       gameActive = false;
-      cells[a].classList.add('win');
-      cells[b].classList.add('win');
-      cells[c].classList.add('win');
+      pattern.forEach(i => {
+        const cell = board.querySelector(`.cell[data-index="${i}"]`);
+        if (cell) cell.classList.add('win');
+      });
       audio.playWin();
       status.textContent = `${getPlayerName(currentPlayer)} wins!`;
       if (currentPlayer === 'X') scoreX++; else scoreO++;
@@ -229,13 +281,26 @@ function checkDraw() {
   return false;
 }
 
+function triggerBoardEnter() {
+  const cells = board.querySelectorAll('.cell');
+  cells.forEach((cell, i) => {
+    cell.style.animationDelay = `${i * 50}ms`;
+  });
+  board.classList.remove('entered');
+  void board.offsetWidth;
+  board.classList.add('entered');
+}
+
 function resetGame() {
+  const total = boardSize * boardSize;
   currentPlayer = 'X';
-  gameState = ['', '', '', '', '', '', '', '', ''];
+  gameState = new Array(total).fill('');
   gameActive = true;
+  cpuThinking = false;
+  winPatterns = generateWinPatterns(boardSize, getWinLen());
   status.textContent = `${getPlayerName('X')}'s turn`;
   setNamesDisabled(false);
-  cells.forEach(cell => {
+  document.querySelectorAll('.cell').forEach(cell => {
     cell.textContent = '';
     cell.classList.remove('x', 'o', 'win');
   });
@@ -243,15 +308,42 @@ function resetGame() {
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   triggerBoardEnter();
+  if (isCpuMode && currentPlayer === 'O') {
+    setTimeout(() => cpuMove(), 400);
+  }
 }
 
-function triggerBoardEnter() {
-  cells.forEach((cell, i) => {
-    cell.style.animationDelay = `${i * 50}ms`;
-  });
-  board.classList.remove('entered');
-  void board.offsetWidth;
-  board.classList.add('entered');
+function buildBoard() {
+  const oldCells = board.querySelectorAll('.cell');
+  oldCells.forEach(el => el.remove());
+
+  const size = boardSize;
+  board.style.setProperty('--board-size', size);
+  winPatterns = generateWinPatterns(size, getWinLen());
+  gameState = new Array(size * size).fill('');
+  gameActive = true;
+  cpuThinking = false;
+  currentPlayer = 'X';
+
+  for (let i = 0; i < size * size; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.index = i;
+    cell.addEventListener('click', handleCellClick);
+    board.appendChild(cell);
+  }
+
+  resizeCanvas();
+  setNamesDisabled(false);
+  status.textContent = `${getPlayerName('X')}'s turn`;
+  if (winAnimId) cancelAnimationFrame(winAnimId);
+  winAnimId = null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  triggerBoardEnter();
+
+  if (isCpuMode && currentPlayer === 'O') {
+    setTimeout(() => cpuMove(), 400);
+  }
 }
 
 function resetScore() {
@@ -316,21 +408,139 @@ function toggleTheme() {
   setTheme(current === 'light' ? 'dark' : 'light');
 }
 
+function toggleMute() {
+  audio.muted = !audio.muted;
+}
+
+function getMaxDepth() {
+  if (boardSize === 3) return Infinity;
+  return boardSize === 4 ? 4 : 3;
+}
+
+function getAvailableMoves(state) {
+  const moves = [];
+  for (let i = 0; i < state.length; i++) {
+    if (state[i] === '') moves.push(i);
+  }
+  return moves;
+}
+
+function evaluateBoard(state, patterns, aiPlayer) {
+  const human = aiPlayer === 'X' ? 'O' : 'X';
+  for (const pattern of patterns) {
+    const vals = pattern.map(i => state[i]);
+    if (vals.every(v => v === aiPlayer)) return 10;
+    if (vals.every(v => v === human)) return -10;
+  }
+  return 0;
+}
+
+function minimax(state, depth, alpha, beta, isMaximizing, patterns, aiPlayer, maxDepth) {
+  const score = evaluateBoard(state, patterns, aiPlayer);
+  if (score === 10) return score - depth;
+  if (score === -10) return score + depth;
+  if (getAvailableMoves(state).length === 0) return 0;
+  if (depth >= maxDepth) return 0;
+
+  const human = aiPlayer === 'X' ? 'O' : 'X';
+
+  if (isMaximizing) {
+    let best = -Infinity;
+    for (const i of getAvailableMoves(state)) {
+      state[i] = aiPlayer;
+      best = Math.max(best, minimax(state, depth + 1, alpha, beta, false, patterns, aiPlayer, maxDepth));
+      state[i] = '';
+      alpha = Math.max(alpha, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const i of getAvailableMoves(state)) {
+      state[i] = human;
+      best = Math.min(best, minimax(state, depth + 1, alpha, beta, true, patterns, aiPlayer, maxDepth));
+      state[i] = '';
+      beta = Math.min(beta, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+function cpuMove() {
+  if (!gameActive) return;
+  if (currentPlayer !== 'O') return;
+
+  const aiPlayer = 'O';
+  const maxDepth = getMaxDepth();
+  let bestScore = -Infinity;
+  let bestMove = -1;
+
+  const state = [...gameState];
+  const moves = getAvailableMoves(state);
+
+  if (moves.length === 0) return;
+
+  for (const i of moves) {
+    state[i] = aiPlayer;
+    const score = (maxDepth === Infinity)
+      ? minimax(state, 0, -Infinity, Infinity, false, winPatterns, aiPlayer, Infinity)
+      : minimax(state, 0, -Infinity, Infinity, false, winPatterns, aiPlayer, maxDepth - 1);
+    state[i] = '';
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = i;
+    }
+  }
+
+  if (bestMove !== -1) {
+    makeMove(bestMove);
+  }
+}
+
+function setBoardSize(size) {
+  if (size === boardSize) return;
+  boardSize = size;
+  localStorage.setItem('boardSize', size);
+  sizeBtns.forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.size) === size);
+  });
+  buildBoard();
+}
+
+sizeBtns.forEach(btn => {
+  btn.addEventListener('click', () => setBoardSize(parseInt(btn.dataset.size)));
+});
+
+function setCpuMode(enabled) {
+  isCpuMode = enabled;
+  localStorage.setItem('cpuMode', enabled);
+  if (enabled && gameActive && currentPlayer === 'O') {
+    setTimeout(() => cpuMove(), 400);
+  }
+}
+
+cpuCheckbox.addEventListener('change', () => {
+  setCpuMode(cpuCheckbox.checked);
+});
+
 const savedTheme = localStorage.getItem('theme') || 'dark';
 setTheme(savedTheme);
 
 muteToggle.textContent = audio.muted ? '\u{1F507}' : '\u{1F50A}';
 
-function toggleMute() {
-  audio.muted = !audio.muted;
-}
+sizeBtns.forEach(btn => {
+  btn.classList.toggle('active', parseInt(btn.dataset.size) === boardSize);
+});
+cpuCheckbox.checked = isCpuMode;
 
-cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+window.addEventListener('resize', resizeCanvas);
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
 
-triggerBoardEnter();
+buildBoard();
+updateScoreDisplay();
 renderHistory();
