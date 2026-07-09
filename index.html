@@ -37,12 +37,27 @@
     <div class="score" id="score">X: 0 | O: 0</div>
     <button class="reset" id="reset">New Game</button>
     <button class="reset reset-score" id="resetScore">Reset Score</button>
+    <button class="reset share-trigger hidden" id="shareBtn">Share Game</button>
     <div class="history" id="history">
       <div class="history-header">
         <h2>Game History</h2>
         <button class="reset clear-history" id="clearHistory">Clear</button>
       </div>
       <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+  <div class="share-modal hidden" id="shareModal">
+    <div class="share-modal-backdrop" id="shareBackdrop"></div>
+    <div class="share-modal-panel">
+      <div class="share-modal-header">
+        <h2>Game Replay</h2>
+        <button class="share-close-btn top-btn" id="shareClose">&times;</button>
+      </div>
+      <canvas id="shareCanvas"></canvas>
+      <div class="share-actions">
+        <button class="reset share-action-btn" id="copyBtn">Copy Image</button>
+        <button class="reset share-action-btn" id="downloadBtn">Download PNG</button>
+      </div>
     </div>
   </div>
   <script src="script.js"></script>

@@ -1,3 +1,16 @@
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    if (r > w / 2) r = w / 2;
+    if (r > h / 2) r = h / 2;
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    return this;
+  };
+}
+
 const board = document.getElementById('board');
 const cells = document.querySelectorAll('.cell');
 const status = document.getElementById('status');
@@ -8,6 +21,13 @@ const themeToggle = document.getElementById('themeToggle');
 const muteToggle = document.getElementById('muteToggle');
 const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistory');
+const shareBtn = document.getElementById('shareBtn');
+const shareModal = document.getElementById('shareModal');
+const shareBackdrop = document.getElementById('shareBackdrop');
+const shareClose = document.getElementById('shareClose');
+const shareCanvas = document.getElementById('shareCanvas');
+const copyBtn = document.getElementById('copyBtn');
+const downloadBtn = document.getElementById('downloadBtn');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -65,6 +85,11 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let moveHistory = [];
+
+function initMoveHistory() {
+  moveHistory = [[...gameState]];
+}
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -140,6 +165,7 @@ function handleCellClick(e) {
   if (!gameActive || gameState[index] !== '') return;
 
   gameState[index] = currentPlayer;
+  moveHistory.push([...gameState]);
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
   setNamesDisabled(true);
@@ -204,6 +230,7 @@ function checkWin() {
       cells[c].classList.add('win');
       audio.playWin();
       status.textContent = `${getPlayerName(currentPlayer)} wins!`;
+      shareBtn.classList.remove('hidden');
       if (currentPlayer === 'X') scoreX++; else scoreO++;
       localStorage.setItem('scoreX', scoreX);
       localStorage.setItem('scoreO', scoreO);
@@ -223,6 +250,7 @@ function checkDraw() {
     gameActive = false;
     audio.playDraw();
     status.textContent = "It's a draw!";
+    shareBtn.classList.remove('hidden');
     saveGameHistory('Draw');
     return true;
   }
@@ -242,6 +270,13 @@ function resetGame() {
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  shareBtn.classList.add('hidden');
+  shareModal.classList.add('hidden');
+  if (replayTimer) {
+    clearTimeout(replayTimer);
+    replayTimer = null;
+  }
+  initMoveHistory();
   triggerBoardEnter();
 }
 
@@ -325,12 +360,267 @@ function toggleMute() {
   audio.muted = !audio.muted;
 }
 
+let replayTimer = null;
+
+function getResultText() {
+  for (const p of winPatterns) {
+    const [a, b, c] = p;
+    if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+      return `${getPlayerName(gameState[a])} wins!`;
+    }
+  }
+  return "It's a draw!";
+}
+
+function renderBoardState(ctx, w, h, state, isFinal) {
+  const style = getComputedStyle(document.documentElement);
+  const bg = style.getPropertyValue('--bg').trim();
+  const text = style.getPropertyValue('--text').trim();
+  const cx = style.getPropertyValue('--color-x').trim();
+  const co = style.getPropertyValue('--color-o').trim();
+  const cb = style.getPropertyValue('--cell-bg').trim();
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  const bs = Math.min(w - 40, 300);
+  const cs = bs / 3;
+  const bx = (w - bs) / 2;
+  const by = 50;
+
+  ctx.fillStyle = text;
+  ctx.font = 'bold 14px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${getPlayerName('X')} vs ${getPlayerName('O')}`, w / 2, 25);
+
+  for (let i = 0; i < 9; i++) {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const x = bx + col * cs;
+    const y = by + row * cs;
+
+    ctx.fillStyle = cb;
+    ctx.beginPath();
+    ctx.roundRect(x, y, cs, cs, 6);
+    ctx.fill();
+
+    ctx.strokeStyle = text;
+    ctx.globalAlpha = 0.12;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(x, y, cs, cs, 6);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    if (state[i]) {
+      const cx2 = x + cs / 2;
+      const cy2 = y + cs / 2;
+      const r = cs * 0.3;
+
+      if (state[i] === 'X') {
+        ctx.strokeStyle = cx;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx2 - r, cy2 - r);
+        ctx.lineTo(cx2 + r, cy2 + r);
+        ctx.moveTo(cx2 + r, cy2 - r);
+        ctx.lineTo(cx2 - r, cy2 + r);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = co;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(cx2, cy2, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+
+  if (isFinal) {
+    ctx.fillStyle = text;
+    ctx.font = 'bold 16px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(getResultText(), w / 2, by + bs + 28);
+
+    ctx.font = '12px Inter, sans-serif';
+    ctx.globalAlpha = 0.6;
+    ctx.fillText(`Round #${roundNumber}`, w / 2, by + bs + 48);
+    ctx.fillText(new Date().toLocaleString(), w / 2, by + bs + 64);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function openShareModal() {
+  shareModal.classList.remove('hidden');
+
+  const dpr = window.devicePixelRatio || 1;
+  const dw = 400;
+  const dh = 460;
+  shareCanvas.width = dw * dpr;
+  shareCanvas.height = dh * dpr;
+  shareCanvas.style.width = dw + 'px';
+  shareCanvas.style.height = dh + 'px';
+  const sctx = shareCanvas.getContext('2d');
+
+  let step = 0;
+  const total = moveHistory.length;
+
+  function renderStep() {
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    renderBoardState(sctx, dw, dh, moveHistory[step], step === total - 1);
+    if (step < total - 1) {
+      step++;
+      replayTimer = setTimeout(renderStep, 500);
+    }
+  }
+
+  renderStep();
+}
+
+function closeShareModal() {
+  shareModal.classList.add('hidden');
+  if (replayTimer) {
+    clearTimeout(replayTimer);
+    replayTimer = null;
+  }
+}
+
+function createExportCanvas() {
+  const c = document.createElement('canvas');
+  const dpr = 2;
+  const w = 500;
+  const h = 580;
+  c.width = w * dpr;
+  c.height = h * dpr;
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const style = getComputedStyle(document.documentElement);
+  const bg = style.getPropertyValue('--bg').trim();
+  const text = style.getPropertyValue('--text').trim();
+  const cx = style.getPropertyValue('--color-x').trim();
+  const co = style.getPropertyValue('--color-o').trim();
+  const cb = style.getPropertyValue('--cell-bg').trim();
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  const bs = 360;
+  const cs = bs / 3;
+  const bx = (w - bs) / 2;
+  const by = 70;
+
+  ctx.fillStyle = text;
+  ctx.font = 'bold 18px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${getPlayerName('X')} vs ${getPlayerName('O')}`, w / 2, 30);
+
+  ctx.font = '12px Inter, sans-serif';
+  ctx.globalAlpha = 0.5;
+  ctx.fillText('Tic-Tac-Toe', w / 2, 48);
+  ctx.globalAlpha = 1;
+
+  const finalState = moveHistory[moveHistory.length - 1];
+
+  for (let i = 0; i < 9; i++) {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const x = bx + col * cs;
+    const y = by + row * cs;
+
+    ctx.fillStyle = cb;
+    ctx.beginPath();
+    ctx.roundRect(x, y, cs, cs, 8);
+    ctx.fill();
+
+    ctx.strokeStyle = text;
+    ctx.globalAlpha = 0.12;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(x, y, cs, cs, 8);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    if (finalState[i]) {
+      const cx2 = x + cs / 2;
+      const cy2 = y + cs / 2;
+      const r = cs * 0.32;
+
+      if (finalState[i] === 'X') {
+        ctx.strokeStyle = cx;
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx2 - r, cy2 - r);
+        ctx.lineTo(cx2 + r, cy2 + r);
+        ctx.moveTo(cx2 + r, cy2 - r);
+        ctx.lineTo(cx2 - r, cy2 + r);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = co;
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(cx2, cy2, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.fillStyle = text;
+  ctx.font = 'bold 20px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(getResultText(), w / 2, by + bs + 38);
+
+  ctx.font = '14px Inter, sans-serif';
+  ctx.globalAlpha = 0.6;
+  ctx.fillText(`Round #${roundNumber}`, w / 2, by + bs + 60);
+  ctx.fillText(new Date().toLocaleString(), w / 2, by + bs + 82);
+  ctx.globalAlpha = 1;
+
+  return c;
+}
+
+async function copyImageToClipboard() {
+  const canvas = createExportCanvas();
+  try {
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    status.textContent = 'Image copied to clipboard!';
+    setTimeout(() => updateStatus(), 2000);
+  } catch {
+    try {
+      await navigator.clipboard.writeText(
+        `Tic-Tac-Toe: ${getPlayerName('X')} vs ${getPlayerName('O')} — ${getResultText()} (Round #${roundNumber})`
+      );
+      status.textContent = 'Game result copied to clipboard!';
+      setTimeout(() => updateStatus(), 2000);
+    } catch {
+      status.textContent = 'Clipboard not supported. Try downloading instead.';
+    }
+  }
+}
+
+function downloadGameImage() {
+  const canvas = createExportCanvas();
+  const link = document.createElement('a');
+  link.download = `tic-tac-toe-round-${roundNumber}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
+shareBtn.addEventListener('click', openShareModal);
+shareBackdrop.addEventListener('click', closeShareModal);
+shareClose.addEventListener('click', closeShareModal);
+copyBtn.addEventListener('click', copyImageToClipboard);
+downloadBtn.addEventListener('click', downloadGameImage);
 
+initMoveHistory();
 triggerBoardEnter();
 renderHistory();
