@@ -215,6 +215,24 @@ h1 {
   to { stroke-dashoffset: 0; }
 }
 
+@media (hover: hover) {
+  .cell .ghost-symbol {
+    width: 70%;
+    height: 70%;
+    display: block;
+    pointer-events: none;
+  }
+
+  .cell .ghost-symbol line,
+  .cell .ghost-symbol circle {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 8;
+    stroke-linecap: round;
+    opacity: 0.3;
+  }
+}
+
 .reset {
   padding: 0.75rem 2rem;
   font-size: 0.85rem;

@@ -60,6 +60,8 @@ const audio = {
 
 const SVG_X = '<svg class="symbol" viewBox="0 0 100 100"><line class="x-line" x1="20" y1="20" x2="80" y2="80"/><line class="x-line" x1="80" y1="20" x2="20" y2="80"/></svg>';
 const SVG_O = '<svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle" cx="50" cy="50" r="30"/></svg>';
+const GHOST_X = '<svg class="ghost-symbol" viewBox="0 0 100 100"><line class="ghost-x-line" x1="20" y1="20" x2="80" y2="80"/><line class="ghost-x-line" x1="80" y1="20" x2="20" y2="80"/></svg>';
+const GHOST_O = '<svg class="ghost-symbol" viewBox="0 0 100 100"><circle class="ghost-o-circle" cx="50" cy="50" r="30"/></svg>';
 
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
@@ -133,9 +135,25 @@ const winPatterns = [
   [0, 4, 8], [2, 4, 6]
 ];
 
+function handleCellEnter(e) {
+  const cell = e.currentTarget;
+  const index = parseInt(cell.dataset.index);
+  if (!gameActive || gameState[index] !== '') return;
+  cell.innerHTML = currentPlayer === 'X' ? GHOST_X : GHOST_O;
+  cell.classList.add(currentPlayer.toLowerCase());
+}
+
+function handleCellLeave(e) {
+  const cell = e.currentTarget;
+  const index = parseInt(cell.dataset.index);
+  if (gameState[index] !== '') return;
+  cell.innerHTML = '';
+  cell.classList.remove('x', 'o');
+}
+
 function handleCellClick(e) {
-  const cell = e.target;
-  const index = cell.dataset.index;
+  const cell = e.currentTarget;
+  const index = parseInt(cell.dataset.index);
 
   if (!gameActive || gameState[index] !== '') return;
 
@@ -326,6 +344,12 @@ function toggleMute() {
 }
 
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+if (window.matchMedia('(hover: hover)').matches) {
+  cells.forEach(cell => {
+    cell.addEventListener('mouseenter', handleCellEnter);
+    cell.addEventListener('mouseleave', handleCellLeave);
+  });
+}
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
