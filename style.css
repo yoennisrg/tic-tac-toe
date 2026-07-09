@@ -337,6 +337,153 @@ h1 {
   transform: scale(1.1);
 }
 
+.stats {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.stats-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.stats-toggle {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  transition: transform 0.2s;
+}
+
+.stats-toggle.collapsed {
+  transform: rotate(-90deg);
+}
+
+.stats-body {
+  background: var(--cell-bg);
+  border-radius: 8px;
+  padding: 0.75rem;
+  transition: background 0.3s;
+}
+
+.stats-body.collapsed {
+  display: none;
+}
+
+.stats-empty {
+  text-align: center;
+  color: #888;
+  font-size: 0.85rem;
+  padding: 0.5rem;
+}
+
+.stat-total {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.win-rate-bar {
+  display: flex;
+  height: 1.5rem;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+}
+
+.win-rate-bar-seg {
+  transition: width 0.4s ease;
+}
+
+.win-rate-bar-x {
+  background: var(--color-x);
+}
+
+.win-rate-bar-d {
+  background: #888;
+}
+
+.win-rate-bar-o {
+  background: var(--color-o);
+}
+
+.win-rate-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.win-rate-labels .label-x {
+  color: var(--color-x);
+}
+
+.win-rate-labels .label-d {
+  color: #888;
+}
+
+.win-rate-labels .label-o {
+  color: var(--color-o);
+}
+
+.streaks {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.streak-entry {
+  flex: 1;
+  background: var(--cell-bg);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.streak-entry .streak-current {
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: block;
+  margin: 0.15rem 0;
+}
+
+.streak-entry .streak-best {
+  color: #888;
+  font-size: 0.75rem;
+}
+
+.avg-moves {
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+
+.avg-moves-values {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.82rem;
+  margin-bottom: 0.75rem;
+}
+
+.reset-stats {
+  display: block;
+  margin: 0 auto;
+  font-size: 0.8rem;
+  padding: 0.4rem 1rem;
+  background: linear-gradient(135deg, var(--btn-reset-bg-start), var(--btn-reset-bg-end));
+}
+
 @keyframes cell-enter {
   from {
     opacity: 0;
