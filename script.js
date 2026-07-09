@@ -223,6 +223,10 @@ function checkDraw() {
     gameActive = false;
     audio.playDraw();
     status.textContent = "It's a draw!";
+    cells.forEach(cell => cell.classList.add('draw'));
+    status.classList.remove('status-bounce');
+    void status.offsetWidth;
+    status.classList.add('status-bounce');
     saveGameHistory('Draw');
     return true;
   }
@@ -237,8 +241,9 @@ function resetGame() {
   setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
-    cell.classList.remove('x', 'o', 'win');
+    cell.classList.remove('x', 'o', 'win', 'draw');
   });
+  status.classList.remove('status-bounce');
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
