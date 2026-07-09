@@ -11,8 +11,9 @@
 </head>
 <body>
   <div class="top-buttons">
-    <button class="top-btn mute-toggle" id="muteToggle" aria-label="Toggle sound">🔊</button>
     <button class="top-btn theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
+    <button class="top-btn settings-toggle" id="settingsToggle" aria-label="Open settings">⚙️</button>
+    <button class="top-btn mute-toggle" id="muteToggle" aria-label="Toggle sound">🔊</button>
   </div>
   <div class="container">
     <h1>Tic-Tac-Toe</h1>
@@ -44,6 +45,30 @@
       </div>
       <div class="history-list" id="historyList"></div>
     </div>
+  </div>
+  <div class="settings-overlay" id="settingsOverlay"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+      <h2>Color Settings</h2>
+      <button class="settings-close" id="settingsClose" aria-label="Close settings">&times;</button>
+    </div>
+    <div class="settings-section">
+      <label class="settings-label">Player X Color</label>
+      <div class="swatches" id="swatchesX"></div>
+      <div class="free-picker-row">
+        <label class="free-picker-label">Custom:</label>
+        <input type="color" id="freePickerX" class="free-picker" value="#38bdf8">
+      </div>
+    </div>
+    <div class="settings-section">
+      <label class="settings-label">Player O Color</label>
+      <div class="swatches" id="swatchesO"></div>
+      <div class="free-picker-row">
+        <label class="free-picker-label">Custom:</label>
+        <input type="color" id="freePickerO" class="free-picker" value="#fb7185">
+      </div>
+    </div>
+    <button class="settings-reset" id="settingsReset">Reset to Defaults</button>
   </div>
   <script src="script.js"></script>
 </body>

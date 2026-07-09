@@ -14,6 +14,8 @@
   --glass-shadow: rgba(0, 0, 0, 0.4);
   --color-x: #38bdf8;
   --color-o: #fb7185;
+  --color-x-rgb: 56, 189, 248;
+  --color-o-rgb: 251, 113, 133;
 }
 
 [data-theme="light"] {
@@ -32,6 +34,8 @@
   --glass-shadow: rgba(0, 0, 0, 0.08);
   --color-x: #0284c7;
   --color-o: #e11d48;
+  --color-x-rgb: 2, 132, 199;
+  --color-o-rgb: 225, 29, 72;
 }
 
 * {
@@ -43,8 +47,8 @@
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg);
-  background-image: radial-gradient(ellipse at 20% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
-                    radial-gradient(ellipse at 80% 50%, rgba(251, 113, 133, 0.06) 0%, transparent 50%);
+  background-image: radial-gradient(ellipse at 20% 50%, rgba(var(--color-x-rgb), 0.06) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 50%, rgba(var(--color-o-rgb), 0.06) 0%, transparent 50%);
   color: var(--text);
   display: flex;
   justify-content: center;
@@ -335,6 +339,178 @@ h1 {
 
 .top-btn:hover {
   transform: scale(1.1);
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 19;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.settings-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: -340px;
+  width: 320px;
+  height: 100vh;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid var(--glass-border);
+  z-index: 20;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -4px 0 24px var(--glass-shadow);
+  overflow-y: auto;
+}
+
+.settings-panel.open {
+  right: 0;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-header h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.settings-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--cell-bg);
+  color: var(--text);
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.settings-close:hover {
+  background: var(--cell-hover);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.settings-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #aaa;
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.swatch:hover {
+  transform: scale(1.1);
+  z-index: 1;
+}
+
+.swatch.active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text);
+}
+
+.swatch.active::after {
+  content: '\2713';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.free-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.free-picker-label {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.free-picker {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+}
+
+.free-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.free-picker::-webkit-color-swatch {
+  border: 2px solid var(--glass-border);
+  border-radius: 6px;
+}
+
+.settings-reset {
+  padding: 0.7rem 1.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--btn-reset-bg-start), var(--btn-reset-bg-end));
+  color: #fff;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: opacity 0.3s, transform 0.2s;
+  margin-top: auto;
+}
+
+.settings-reset:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 @keyframes cell-enter {

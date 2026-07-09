@@ -325,6 +325,122 @@ function toggleMute() {
   audio.muted = !audio.muted;
 }
 
+const PALETTES = {
+  X: ['#38bdf8', '#818cf8', '#a78bfa', '#34d399', '#fbbf24', '#f472b6', '#2dd4bf', '#4ade80'],
+  O: ['#fb7185', '#f87171', '#fb923c', '#facc15', '#c084fc', '#2dd4bf', '#67e8f9', '#a78bfa'],
+};
+
+let colorX = localStorage.getItem('colorX') || getDefaultColor('X');
+let colorO = localStorage.getItem('colorO') || getDefaultColor('O');
+
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsPanel = document.getElementById('settingsPanel');
+const settingsOverlay = document.getElementById('settingsOverlay');
+const settingsClose = document.getElementById('settingsClose');
+const settingsReset = document.getElementById('settingsReset');
+const swatchesX = document.getElementById('swatchesX');
+const swatchesO = document.getElementById('swatchesO');
+const freePickerX = document.getElementById('freePickerX');
+const freePickerO = document.getElementById('freePickerO');
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
+function applyColors() {
+  const root = document.documentElement;
+  root.style.setProperty('--color-x', colorX);
+  root.style.setProperty('--color-o', colorO);
+  root.style.setProperty('--color-x-rgb', hexToRgb(colorX));
+  root.style.setProperty('--color-o-rgb', hexToRgb(colorO));
+  freePickerX.value = colorX;
+  freePickerO.value = colorO;
+  document.querySelectorAll('.swatch').forEach(el => {
+    el.classList.toggle('active', el.dataset.color === (el.dataset.player === 'X' ? colorX : colorO));
+  });
+}
+
+function saveColors() {
+  localStorage.setItem('colorX', colorX);
+  localStorage.setItem('colorO', colorO);
+}
+
+function getDefaultColor(player) {
+  const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  if (theme === 'light') return player === 'X' ? '#0284c7' : '#e11d48';
+  return player === 'X' ? '#38bdf8' : '#fb7185';
+}
+
+function renderSwatches(player) {
+  const container = player === 'X' ? swatchesX : swatchesO;
+  const current = player === 'X' ? colorX : colorO;
+  container.innerHTML = PALETTES[player].map(c =>
+    `<div class="swatch${c === current ? ' active' : ''}" data-player="${player}" data-color="${c}" style="background:${c}"></div>`
+  ).join('');
+}
+
+function handleSwatchClick(e) {
+  const swatch = e.target.closest('.swatch');
+  if (!swatch) return;
+  const player = swatch.dataset.player;
+  const color = swatch.dataset.color;
+  const otherColor = player === 'X' ? colorO : colorX;
+  if (color === otherColor) return;
+  if (player === 'X') colorX = color;
+  else colorO = color;
+  saveColors();
+  applyColors();
+  renderSwatches(player);
+}
+
+function handleFreePicker(e) {
+  const player = e.target.id === 'freePickerX' ? 'X' : 'O';
+  const color = e.target.value;
+  const otherColor = player === 'X' ? colorO : colorX;
+  if (color === otherColor) return;
+  if (player === 'X') colorX = color;
+  else colorO = color;
+  saveColors();
+  applyColors();
+  renderSwatches(player);
+}
+
+function resetColors() {
+  colorX = getDefaultColor('X');
+  colorO = getDefaultColor('O');
+  localStorage.removeItem('colorX');
+  localStorage.removeItem('colorO');
+  applyColors();
+  renderSwatches('X');
+  renderSwatches('O');
+}
+
+function openSettings() {
+  settingsPanel.classList.add('open');
+  settingsOverlay.classList.add('open');
+}
+
+function closeSettings() {
+  settingsPanel.classList.remove('open');
+  settingsOverlay.classList.remove('open');
+}
+
+renderSwatches('X');
+renderSwatches('O');
+applyColors();
+
+settingsToggle.addEventListener('click', openSettings);
+settingsClose.addEventListener('click', closeSettings);
+settingsOverlay.addEventListener('click', closeSettings);
+settingsReset.addEventListener('click', resetColors);
+swatchesX.addEventListener('click', handleSwatchClick);
+swatchesO.addEventListener('click', handleSwatchClick);
+freePickerX.addEventListener('input', handleFreePicker);
+freePickerO.addEventListener('input', handleFreePicker);
+
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
