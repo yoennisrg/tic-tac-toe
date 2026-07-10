@@ -50,6 +50,7 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  overflow-x: hidden;
   transition: background 0.3s, color 0.3s;
 }
 
@@ -158,8 +159,53 @@ h1 {
 
 @media (max-width: 480px) {
   .container {
-    padding: 1.5rem 0.75rem;
+    padding: 1.5rem 1rem;
     border-radius: 16px;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .names {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .names input {
+    width: 110px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .container {
+    padding: 1.25rem 0.75rem;
+    border-radius: 12px;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  .status {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .names input {
+    width: 100px;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .reset {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.8rem;
+  }
+
+  .history {
+    max-width: 100%;
   }
 }
 
@@ -227,6 +273,7 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
+  touch-action: manipulation;
 }
 
 .reset:hover {
@@ -273,6 +320,7 @@ h1 {
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: opacity 0.3s, transform 0.2s;
+  touch-action: manipulation;
 }
 
 .clear-history:hover {
@@ -331,6 +379,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
 }
 
 .top-btn:hover {
