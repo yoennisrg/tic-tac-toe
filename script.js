@@ -76,8 +76,25 @@ let scoreX = parseInt(localStorage.getItem('scoreX') || '0');
 let scoreO = parseInt(localStorage.getItem('scoreO') || '0');
 let roundNumber = parseInt(localStorage.getItem('roundNumber') || '0');
 
+let seriesMode = localStorage.getItem('seriesMode') || 'single';
+let seriesWinsX = parseInt(localStorage.getItem('seriesWinsX') || '0');
+let seriesWinsO = parseInt(localStorage.getItem('seriesWinsO') || '0');
+let seriesDraws = parseInt(localStorage.getItem('seriesDraws') || '0');
+let seriesActive = localStorage.getItem('seriesActive') === 'true';
+let seriesOver = localStorage.getItem('seriesOver') === 'true';
+let seriesResults = JSON.parse(localStorage.getItem('seriesResults') || '[]');
+let seriesTimerId = null;
+
 const nameXInput = document.getElementById('nameX');
 const nameOInput = document.getElementById('nameO');
+const seriesBtns = document.querySelectorAll('.series-btn');
+const seriesProgress = document.getElementById('seriesProgress');
+const rematchBtn = document.getElementById('rematchBtn');
+const rematchFromOverBtn = document.getElementById('rematchFromOverBtn');
+const matchOver = document.getElementById('matchOver');
+const matchOverTitle = document.getElementById('matchOverTitle');
+const matchOverWinner = document.getElementById('matchOverWinner');
+const matchOverScore = document.getElementById('matchOverScore');
 
 function getDefaultName(player) {
   return player === 'X' ? 'Player X' : 'Player O';
@@ -111,7 +128,11 @@ nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
 
 function updateStatus() {
   if (!gameActive) return;
-  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  let text = `${getPlayerName(currentPlayer)}'s turn`;
+  if (seriesMode !== 'single') {
+    text += ` (${seriesWinsX}-${seriesWinsO})`;
+  }
+  status.textContent = text;
 }
 
 function setNamesDisabled(disabled) {
@@ -133,6 +154,135 @@ const winPatterns = [
   [0, 4, 8], [2, 4, 6]
 ];
 
+function getSeriesLength() {
+  if (seriesMode === 'bo3') return 3;
+  if (seriesMode === 'bo5') return 5;
+  if (seriesMode === 'bo7') return 7;
+  return 1;
+}
+
+function getSeriesMajority() {
+  return Math.ceil(getSeriesLength() / 2);
+}
+
+function saveSeriesState() {
+  localStorage.setItem('seriesMode', seriesMode);
+  localStorage.setItem('seriesWinsX', seriesWinsX);
+  localStorage.setItem('seriesWinsO', seriesWinsO);
+  localStorage.setItem('seriesDraws', seriesDraws);
+  localStorage.setItem('seriesActive', seriesActive);
+  localStorage.setItem('seriesOver', seriesOver);
+  localStorage.setItem('seriesResults', JSON.stringify(seriesResults));
+}
+
+function renderSeriesProgress() {
+  const length = getSeriesLength();
+  if (seriesMode === 'single') {
+    seriesProgress.innerHTML = '';
+    return;
+  }
+  let html = '';
+  for (let i = 0; i < length; i++) {
+    let cls = 'series-dot';
+    if (i < seriesResults.length) {
+      const result = seriesResults[i];
+      if (result === 'x') cls += ' win-x';
+      else if (result === 'o') cls += ' win-o';
+      else cls += ' draw';
+    } else if (i === seriesResults.length && seriesActive && !seriesOver) {
+      cls += ' active-dot';
+    }
+    html += `<span class="${cls}"></span>`;
+  }
+  seriesProgress.innerHTML = html;
+}
+
+function setSeriesMode(mode) {
+  if (mode === seriesMode) return;
+  seriesMode = mode;
+  seriesWinsX = 0;
+  seriesWinsO = 0;
+  seriesDraws = 0;
+  seriesActive = mode !== 'single';
+  seriesOver = false;
+  seriesResults = [];
+  if (seriesTimerId) {
+    clearTimeout(seriesTimerId);
+    seriesTimerId = null;
+  }
+  saveSeriesState();
+  resetBoard();
+  setNamesDisabled(false);
+  matchOver.classList.remove('visible');
+  rematchBtn.style.display = 'none';
+  updateSeriesUI();
+}
+
+function updateSeriesUI() {
+  seriesBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === seriesMode);
+  });
+  renderSeriesProgress();
+  if (seriesMode === 'single') {
+    updateScoreDisplay();
+  }
+}
+
+function handleSeriesAfterGame(winner) {
+  if (seriesMode === 'single') return;
+
+  if (winner === 'X') seriesWinsX++;
+  else if (winner === 'O') seriesWinsO++;
+  else seriesDraws++;
+
+  seriesResults.push(winner === 'X' ? 'x' : winner === 'O' ? 'o' : 'draw');
+  seriesActive = true;
+  saveSeriesState();
+  renderSeriesProgress();
+
+  const majority = getSeriesMajority();
+  const seriesText = ` (${seriesWinsX}-${seriesWinsO})`;
+
+  const allPlayed = seriesResults.length >= getSeriesLength();
+
+  if (seriesWinsX >= majority || seriesWinsO >= majority || allPlayed) {
+    const matchWinner = seriesWinsX >= majority ? 'X' : seriesWinsO >= majority ? 'O' : null;
+    seriesOver = true;
+    seriesActive = false;
+    saveSeriesState();
+    if (matchWinner) {
+      status.textContent = `${getPlayerName(matchWinner)} wins the match!${seriesText}`;
+      showMatchOver(matchWinner);
+    } else {
+      status.textContent = `The series ended in a draw!${seriesText}`;
+      matchOverTitle.textContent = 'Series Drawn!';
+      matchOverWinner.textContent = `No winner — tied ${seriesWinsX}-${seriesWinsO}`;
+      matchOverScore.textContent = `Final Score: ${getPlayerName('X')} ${seriesWinsX} – ${seriesWinsO} ${getPlayerName('O')}`;
+      matchOver.classList.add('visible');
+      rematchBtn.style.display = 'inline-block';
+    }
+  } else if (winner) {
+    status.textContent = `${getPlayerName(winner)} wins!${seriesText}`;
+    seriesTimerId = setTimeout(advanceToNextGame, 2000);
+  } else {
+    status.textContent = `It's a draw!${seriesText}`;
+    seriesTimerId = setTimeout(advanceToNextGame, 2000);
+  }
+}
+
+function advanceToNextGame() {
+  seriesTimerId = null;
+  resetBoard();
+}
+
+function showMatchOver(winner) {
+  matchOverTitle.textContent = 'Match Over!';
+  matchOverWinner.textContent = `${getPlayerName(winner)} wins the series!`;
+  matchOverScore.textContent = `Final Score: ${getPlayerName('X')} ${seriesWinsX} – ${seriesWinsO} ${getPlayerName('O')}`;
+  matchOver.classList.add('visible');
+  rematchBtn.style.display = 'inline-block';
+}
+
 function handleCellClick(e) {
   const cell = e.target;
   const index = cell.dataset.index;
@@ -146,11 +296,20 @@ function handleCellClick(e) {
 
   audio.playMove();
 
-  if (checkWin()) return;
-  if (checkDraw()) return;
+  if (checkWin()) {
+    handleSeriesAfterGame(currentPlayer);
+    return;
+  }
+  if (checkDraw()) {
+    handleSeriesAfterGame(null);
+    return;
+  }
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  if (seriesMode !== 'single') {
+    status.textContent += ` (${seriesWinsX}-${seriesWinsO})`;
+  }
 }
 
 function getCellCenter(index) {
@@ -229,12 +388,14 @@ function checkDraw() {
   return false;
 }
 
-function resetGame() {
+function resetBoard() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
   status.textContent = `${getPlayerName('X')}'s turn`;
-  setNamesDisabled(false);
+  if (seriesMode !== 'single') {
+    status.textContent += ` (${seriesWinsX}-${seriesWinsO})`;
+  }
   cells.forEach(cell => {
     cell.textContent = '';
     cell.classList.remove('x', 'o', 'win');
@@ -245,6 +406,32 @@ function resetGame() {
   triggerBoardEnter();
 }
 
+function resetSeries() {
+  seriesWinsX = 0;
+  seriesWinsO = 0;
+  seriesDraws = 0;
+  seriesActive = seriesMode !== 'single';
+  seriesOver = false;
+  seriesResults = [];
+  if (seriesTimerId) {
+    clearTimeout(seriesTimerId);
+    seriesTimerId = null;
+  }
+  saveSeriesState();
+  renderSeriesProgress();
+  updateScoreDisplay();
+  rematchBtn.style.display = 'none';
+  matchOver.classList.remove('visible');
+  matchOverTitle.textContent = 'Match Over!';
+}
+
+function resetGame() {
+  resetBoard();
+  resetSeries();
+  setNamesDisabled(false);
+  matchOver.classList.remove('visible');
+}
+
 function triggerBoardEnter() {
   cells.forEach((cell, i) => {
     cell.style.animationDelay = `${i * 50}ms`;
@@ -252,6 +439,14 @@ function triggerBoardEnter() {
   board.classList.remove('entered');
   void board.offsetWidth;
   board.classList.add('entered');
+}
+
+function startRematch() {
+  resetSeries();
+  resetBoard();
+  setNamesDisabled(false);
+  matchOver.classList.remove('visible');
+  rematchBtn.style.display = 'none';
 }
 
 function resetScore() {
@@ -274,9 +469,13 @@ function saveGameHistory(winner) {
   roundNumber++;
   localStorage.setItem('roundNumber', roundNumber);
   const history = getHistory();
+  let label = winner === 'Draw' ? 'Draw' : `${getPlayerName(winner)} wins`;
+  if (seriesMode !== 'single') {
+    label += ` [${seriesMode.toUpperCase()}]`;
+  }
   history.unshift({
     round: roundNumber,
-    winner,
+    winner: label,
     timestamp: new Date().toLocaleString()
   });
   if (history.length > 5) history.pop();
@@ -331,6 +530,39 @@ resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
+
+seriesBtns.forEach(btn => {
+  btn.addEventListener('click', () => setSeriesMode(btn.dataset.mode));
+});
+rematchBtn.addEventListener('click', startRematch);
+rematchFromOverBtn.addEventListener('click', startRematch);
+
+updateSeriesUI();
+
+if (seriesActive || seriesOver) {
+  renderSeriesProgress();
+  if (seriesMode !== 'single') {
+    if (seriesOver) {
+      if (seriesWinsX > seriesWinsO) {
+        status.textContent = `${getPlayerName('X')} wins the match! (${seriesWinsX}-${seriesWinsO})`;
+        showMatchOver('X');
+      } else if (seriesWinsO > seriesWinsX) {
+        status.textContent = `${getPlayerName('O')} wins the match! (${seriesWinsX}-${seriesWinsO})`;
+        showMatchOver('O');
+      } else {
+        status.textContent = `The series ended in a draw! (${seriesWinsX}-${seriesWinsO})`;
+        matchOverTitle.textContent = 'Series Drawn!';
+        matchOverWinner.textContent = `No winner — tied ${seriesWinsX}-${seriesWinsO}`;
+        matchOverScore.textContent = `Final Score: ${getPlayerName('X')} ${seriesWinsX} – ${seriesWinsO} ${getPlayerName('O')}`;
+        matchOver.classList.add('visible');
+        rematchBtn.style.display = 'inline-block';
+      }
+    } else if (seriesResults.length > 0) {
+      status.textContent = `${getPlayerName('X')}'s turn (${seriesWinsX}-${seriesWinsO})`;
+      setNamesDisabled(true);
+    }
+  }
+}
 
 triggerBoardEnter();
 renderHistory();

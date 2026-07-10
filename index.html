@@ -16,6 +16,13 @@
   </div>
   <div class="container">
     <h1>Tic-Tac-Toe</h1>
+    <div class="series-settings">
+      <button class="series-btn" data-mode="single">Single</button>
+      <button class="series-btn" data-mode="bo3">Best of 3</button>
+      <button class="series-btn" data-mode="bo5">Best of 5</button>
+      <button class="series-btn" data-mode="bo7">Best of 7</button>
+    </div>
+    <div class="series-progress" id="seriesProgress"></div>
     <div class="names">
       <input type="text" id="nameX" value="Player X" maxlength="20" spellcheck="false">
       <span class="vs">vs</span>
@@ -35,8 +42,19 @@
       <canvas id="winCanvas"></canvas>
     </div>
     <div class="score" id="score">X: 0 | O: 0</div>
-    <button class="reset" id="reset">New Game</button>
-    <button class="reset reset-score" id="resetScore">Reset Score</button>
+    <div class="btn-row">
+      <button class="reset" id="reset">New Game</button>
+      <button class="reset rematch-btn" id="rematchBtn">Rematch</button>
+      <button class="reset reset-score" id="resetScore">Reset Score</button>
+    </div>
+    <div class="match-over" id="matchOver">
+      <div class="match-over-content">
+        <div class="match-over-title" id="matchOverTitle">Match Over!</div>
+        <div class="match-over-winner" id="matchOverWinner"></div>
+        <div class="match-over-score" id="matchOverScore"></div>
+        <button class="reset" id="rematchFromOverBtn">Rematch</button>
+      </div>
+    </div>
     <div class="history" id="history">
       <div class="history-header">
         <h2>Game History</h2>
