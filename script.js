@@ -65,6 +65,14 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let isCpuThinking = false;
+
+const modeBtns = document.querySelectorAll('.mode-btn');
+const diffSelector = document.getElementById('difficultySelector');
+const diffBtns = document.querySelectorAll('.diff-btn');
+
+let gameMode = localStorage.getItem('gameMode') || 'pvp';
+let difficulty = localStorage.getItem('difficulty') || 'medium';
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -133,11 +141,126 @@ const winPatterns = [
   [0, 4, 8], [2, 4, 6]
 ];
 
+function checkWinner(board, player) {
+  return winPatterns.some(([a, b, c]) =>
+    board[a] === player && board[b] === player && board[c] === player
+  );
+}
+
+function getEmptyIndices(board) {
+  return board.reduce((acc, val, i) => val === '' ? [...acc, i] : acc, []);
+}
+
+function minimax(board, depth, isMaximizing, alpha, beta, maxDepth) {
+  if (checkWinner(board, 'O')) return 10 - depth;
+  if (checkWinner(board, 'X')) return depth - 10;
+  if (getEmptyIndices(board).length === 0) return 0;
+  if (depth >= maxDepth) return 0;
+
+  if (isMaximizing) {
+    let best = -Infinity;
+    for (const i of getEmptyIndices(board)) {
+      board[i] = 'O';
+      best = Math.max(best, minimax(board, depth + 1, false, alpha, beta, maxDepth));
+      board[i] = '';
+      alpha = Math.max(alpha, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const i of getEmptyIndices(board)) {
+      board[i] = 'X';
+      best = Math.min(best, minimax(board, depth + 1, true, alpha, beta, maxDepth));
+      board[i] = '';
+      beta = Math.min(beta, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+function getCpuMove() {
+  const empty = getEmptyIndices(gameState);
+  if (empty.length === 0) return -1;
+
+  if (difficulty === 'easy') {
+    return empty[Math.floor(Math.random() * empty.length)];
+  }
+
+  const maxDepth = difficulty === 'medium' ? 3 : Infinity;
+  let bestScore = -Infinity;
+  let bestMove = empty[0];
+
+  for (const i of empty) {
+    gameState[i] = 'O';
+    const score = minimax(gameState, 0, false, -Infinity, Infinity, maxDepth);
+    gameState[i] = '';
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = i;
+    }
+  }
+  return bestMove;
+}
+
+function cpuTurn() {
+  if (!gameActive || currentPlayer !== 'O' || gameMode !== 'cpu') return;
+  isCpuThinking = true;
+  board.classList.add('thinking');
+
+  setTimeout(() => {
+    if (!gameActive) {
+      isCpuThinking = false;
+      board.classList.remove('thinking');
+      return;
+    }
+    const move = getCpuMove();
+    if (move === -1) return;
+    const cell = cells[move];
+    gameState[move] = 'O';
+    cell.innerHTML = SVG_O;
+    cell.classList.add('o');
+    audio.playMove();
+    isCpuThinking = false;
+    board.classList.remove('thinking');
+    if (checkWin()) return;
+    if (checkDraw()) return;
+    currentPlayer = 'X';
+    status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  }, 400);
+}
+
+function setGameMode(mode) {
+  gameMode = mode;
+  localStorage.setItem('gameMode', mode);
+  modeBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  diffSelector.style.display = mode === 'cpu' ? 'flex' : 'none';
+  if (mode === 'cpu') {
+    nameOInput.value = 'CPU';
+    nameOInput.disabled = true;
+  } else {
+    nameOInput.value = loadName('O');
+    nameOInput.disabled = false;
+  }
+}
+
+function setDifficulty(diff) {
+  difficulty = diff;
+  localStorage.setItem('difficulty', diff);
+  diffBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.diff === diff);
+  });
+}
+
 function handleCellClick(e) {
   const cell = e.target;
   const index = cell.dataset.index;
 
-  if (!gameActive || gameState[index] !== '') return;
+  if (!gameActive || gameState[index] !== '' || isCpuThinking) return;
+  if (gameMode === 'cpu' && currentPlayer === 'O') return;
 
   gameState[index] = currentPlayer;
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
@@ -151,6 +274,10 @@ function handleCellClick(e) {
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+
+  if (gameMode === 'cpu' && currentPlayer === 'O') {
+    cpuTurn();
+  }
 }
 
 function getCellCenter(index) {
@@ -233,8 +360,10 @@ function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
+  isCpuThinking = false;
   status.textContent = `${getPlayerName('X')}'s turn`;
-  setNamesDisabled(false);
+  setNamesDisabled(gameMode === 'cpu');
+  board.classList.remove('thinking');
   cells.forEach(cell => {
     cell.textContent = '';
     cell.classList.remove('x', 'o', 'win');
@@ -331,6 +460,22 @@ resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
+
+modeBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    setGameMode(btn.dataset.mode);
+    resetGame();
+  });
+});
+
+diffBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    setDifficulty(btn.dataset.diff);
+  });
+});
+
+setGameMode(gameMode);
+setDifficulty(difficulty);
 
 triggerBoardEnter();
 renderHistory();
