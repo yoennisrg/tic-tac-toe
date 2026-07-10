@@ -141,6 +141,7 @@ function handleCellClick(e) {
 
   gameState[index] = currentPlayer;
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
+  cell.classList.remove('ghost');
   cell.classList.add(currentPlayer.toLowerCase());
   setNamesDisabled(true);
 
@@ -199,6 +200,7 @@ function checkWin() {
     const [a, b, c] = pattern;
     if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
       gameActive = false;
+      clearAllGhosts();
       cells[a].classList.add('win');
       cells[b].classList.add('win');
       cells[c].classList.add('win');
@@ -221,6 +223,7 @@ function checkWin() {
 function checkDraw() {
   if (gameState.every(cell => cell !== '')) {
     gameActive = false;
+    clearAllGhosts();
     audio.playDraw();
     status.textContent = "It's a draw!";
     saveGameHistory('Draw');
@@ -237,7 +240,7 @@ function resetGame() {
   setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
-    cell.classList.remove('x', 'o', 'win');
+    cell.classList.remove('x', 'o', 'win', 'ghost');
   });
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
@@ -325,7 +328,28 @@ function toggleMute() {
   audio.muted = !audio.muted;
 }
 
-cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+function showGhost(cell) {
+  if (!gameActive || gameState[cell.dataset.index] !== '') return;
+  cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
+  cell.classList.add(currentPlayer.toLowerCase(), 'ghost');
+}
+
+function hideGhost(cell) {
+  cell.innerHTML = '';
+  cell.classList.remove('ghost');
+}
+
+function clearAllGhosts() {
+  cells.forEach(cell => {
+    if (cell.classList.contains('ghost')) hideGhost(cell);
+  });
+}
+
+cells.forEach(cell => {
+  cell.addEventListener('mouseenter', () => showGhost(cell));
+  cell.addEventListener('mouseleave', () => hideGhost(cell));
+  cell.addEventListener('click', handleCellClick);
+});
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
