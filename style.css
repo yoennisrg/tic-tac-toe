@@ -207,6 +207,55 @@ h1 {
   color: #fff;
 }
 
+.cell.draw-pulse {
+  animation: draw-pulse 1.8s ease-in-out forwards;
+}
+
+.status.draw-bounce {
+  animation: status-bounce 0.6s ease-out forwards;
+}
+
+@keyframes draw-pulse {
+  0%, 100% {
+    background: var(--cell-bg);
+    box-shadow: none;
+    color: inherit;
+  }
+  15%, 45% {
+    background: rgba(136, 136, 136, 0.25);
+    box-shadow: 0 0 12px rgba(136, 136, 136, 0.4);
+    color: #888;
+  }
+  30%, 60% {
+    background: var(--cell-bg);
+    box-shadow: none;
+    color: inherit;
+  }
+  75%, 90% {
+    background: rgba(136, 136, 136, 0.25);
+    box-shadow: 0 0 12px rgba(136, 136, 136, 0.4);
+    color: #888;
+  }
+}
+
+@keyframes status-bounce {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @keyframes draw-line {
   to { stroke-dashoffset: 0; }
 }
@@ -361,5 +410,17 @@ h1 {
   .reset:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.draw-pulse {
+    animation: none;
+    background: rgba(136, 136, 136, 0.15);
+  }
+
+  .status.draw-bounce {
+    animation: none;
+    opacity: 1;
   }
 }
