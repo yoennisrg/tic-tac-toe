@@ -215,6 +215,25 @@ h1 {
   to { stroke-dashoffset: 0; }
 }
 
+@keyframes draw-pulse {
+  0%, 100% {
+    background: var(--cell-bg);
+    box-shadow: none;
+  }
+  50% {
+    background: #888;
+    box-shadow: 0 0 12px rgba(136, 136, 136, 0.5);
+  }
+}
+
+@keyframes status-shake {
+  0% { transform: translateY(-8px); opacity: 0; }
+  40% { transform: translateY(3px); opacity: 1; }
+  60% { transform: translateY(-2px); }
+  80% { transform: translateY(1px); }
+  100% { transform: translateY(0); }
+}
+
 .reset {
   padding: 0.75rem 2rem;
   font-size: 0.85rem;
@@ -361,5 +380,18 @@ h1 {
   .reset:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .cell.draw {
+    color: #888;
+    animation: draw-pulse 0.6s ease-in-out 3;
+  }
+
+  .cell.draw .symbol {
+    color: #888;
+  }
+
+  .status.draw-animate {
+    animation: status-shake 0.5s ease-out;
   }
 }
