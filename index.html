@@ -21,22 +21,22 @@
       <span class="vs">vs</span>
       <input type="text" id="nameO" value="Player O" maxlength="20" spellcheck="false">
     </div>
-    <div class="status" id="status">Player X's turn</div>
-    <div class="board" id="board">
-      <div class="cell" data-index="0"></div>
-      <div class="cell" data-index="1"></div>
-      <div class="cell" data-index="2"></div>
-      <div class="cell" data-index="3"></div>
-      <div class="cell" data-index="4"></div>
-      <div class="cell" data-index="5"></div>
-      <div class="cell" data-index="6"></div>
-      <div class="cell" data-index="7"></div>
-      <div class="cell" data-index="8"></div>
+    <div class="status" id="status" aria-live="polite" aria-atomic="true">Player X's turn</div>
+    <div class="board" id="board" role="grid" aria-label="Tic-tac-toe board">
+      <div class="cell" data-index="0" role="gridcell" tabindex="0" aria-label="Row 1, Column 1, empty"></div>
+      <div class="cell" data-index="1" role="gridcell" tabindex="-1" aria-label="Row 1, Column 2, empty"></div>
+      <div class="cell" data-index="2" role="gridcell" tabindex="-1" aria-label="Row 1, Column 3, empty"></div>
+      <div class="cell" data-index="3" role="gridcell" tabindex="-1" aria-label="Row 2, Column 1, empty"></div>
+      <div class="cell" data-index="4" role="gridcell" tabindex="-1" aria-label="Row 2, Column 2, empty"></div>
+      <div class="cell" data-index="5" role="gridcell" tabindex="-1" aria-label="Row 2, Column 3, empty"></div>
+      <div class="cell" data-index="6" role="gridcell" tabindex="-1" aria-label="Row 3, Column 1, empty"></div>
+      <div class="cell" data-index="7" role="gridcell" tabindex="-1" aria-label="Row 3, Column 2, empty"></div>
+      <div class="cell" data-index="8" role="gridcell" tabindex="-1" aria-label="Row 3, Column 3, empty"></div>
       <canvas id="winCanvas"></canvas>
     </div>
     <div class="score" id="score">X: 0 | O: 0</div>
-    <button class="reset" id="reset">New Game</button>
-    <button class="reset reset-score" id="resetScore">Reset Score</button>
+    <button class="reset" id="reset" aria-label="Start new game">New Game</button>
+    <button class="reset reset-score" id="resetScore" aria-label="Reset all scores to zero">Reset Score</button>
     <div class="history" id="history">
       <div class="history-header">
         <h2>Game History</h2>

@@ -145,6 +145,7 @@ function handleCellClick(e) {
   setNamesDisabled(true);
 
   audio.playMove();
+  updateCellAriaLabels();
 
   if (checkWin()) return;
   if (checkDraw()) return;
@@ -242,6 +243,10 @@ function resetGame() {
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  cells[focusedIndex].setAttribute('tabindex', '-1');
+  cells[0].setAttribute('tabindex', '0');
+  focusedIndex = 0;
+  updateCellAriaLabels();
   triggerBoardEnter();
 }
 
@@ -325,7 +330,87 @@ function toggleMute() {
   audio.muted = !audio.muted;
 }
 
-cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+let focusedIndex = 0;
+
+function getCellLabel(index) {
+  const row = Math.floor(index / 3) + 1;
+  const col = (index % 3) + 1;
+  const content = gameState[index] || 'empty';
+  return `Row ${row}, Column ${col}, ${content}`;
+}
+
+function updateCellAriaLabels() {
+  cells.forEach((cell, i) => {
+    cell.setAttribute('aria-label', getCellLabel(i));
+  });
+}
+
+function moveFocus(newIndex) {
+  if (newIndex < 0 || newIndex > 8) return;
+  cells[focusedIndex].setAttribute('tabindex', '-1');
+  cells[newIndex].setAttribute('tabindex', '0');
+  cells[newIndex].focus();
+  focusedIndex = newIndex;
+}
+
+function handleCellKeyDown(e) {
+  const index = parseInt(e.target.dataset.index);
+  if (isNaN(index)) return;
+
+  const row = Math.floor(index / 3);
+  const col = index % 3;
+  let newIndex = index;
+
+  switch (e.key) {
+    case 'ArrowUp':
+      e.preventDefault();
+      newIndex = row > 0 ? index - 3 : index;
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      newIndex = row < 2 ? index + 3 : index;
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      newIndex = col > 0 ? index - 1 : index;
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      newIndex = col < 2 ? index + 1 : index;
+      break;
+    case 'Enter':
+    case ' ':
+      e.preventDefault();
+      if (gameActive && gameState[index] === '') {
+        gameState[index] = currentPlayer;
+        e.target.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
+        e.target.classList.add(currentPlayer.toLowerCase());
+        setNamesDisabled(true);
+        audio.playMove();
+        updateCellAriaLabels();
+        if (checkWin()) return;
+        if (checkDraw()) return;
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+      }
+      return;
+    case 'Escape':
+    case 'Tab':
+      return;
+    default:
+      return;
+  }
+
+  if (newIndex !== index) {
+    moveFocus(newIndex);
+  }
+}
+
+cells.forEach((cell, i) => {
+  cell.addEventListener('click', handleCellClick);
+  cell.addEventListener('keydown', handleCellKeyDown);
+  cell.addEventListener('focus', () => { focusedIndex = i; });
+});
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
