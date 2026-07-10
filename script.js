@@ -61,6 +61,27 @@ const audio = {
 const SVG_X = '<svg class="symbol" viewBox="0 0 100 100"><line class="x-line" x1="20" y1="20" x2="80" y2="80"/><line class="x-line" x1="80" y1="20" x2="20" y2="80"/></svg>';
 const SVG_O = '<svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle" cx="50" cy="50" r="30"/></svg>';
 
+function timeAgo(dateString) {
+  const now = Date.now();
+  const past = new Date(dateString).getTime();
+  if (isNaN(past)) return dateString;
+  const seconds = Math.floor((now - past) / 1000);
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return seconds + 's ago';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + 'm ago';
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + 'h ago';
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'yesterday';
+  if (days < 30) return days + 'd ago';
+  const months = Math.floor(days / 30);
+  if (months < 12) return months + 'mo ago';
+  return Math.floor(months / 12) + 'y ago';
+}
+
+const HISTORY_ICONS = { X: '\u25A3', O: '\u{1F7E6}', Draw: '\u{1F91D}' };
+
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
@@ -277,9 +298,11 @@ function saveGameHistory(winner) {
   history.unshift({
     round: roundNumber,
     winner,
-    timestamp: new Date().toLocaleString()
+    nameX: getPlayerName('X'),
+    nameO: getPlayerName('O'),
+    timestamp: new Date().toISOString()
   });
-  if (history.length > 5) history.pop();
+  if (history.length > 10) history.pop();
   localStorage.setItem('gameHistory', JSON.stringify(history));
   renderHistory();
 }
@@ -290,12 +313,28 @@ function renderHistory() {
     historyList.innerHTML = '<div class="history-empty">No games played yet</div>';
     return;
   }
-  historyList.innerHTML = history.map(entry =>
-    `<div class="history-entry">
-      <span>#${entry.round} — ${entry.winner}</span>
-      <span>${entry.timestamp}</span>
-    </div>`
-  ).join('');
+  historyList.innerHTML = history.map(entry => {
+    const icon = HISTORY_ICONS[entry.winner] || '';
+    let label;
+    if (entry.winner === 'Draw') {
+      const nx = entry.nameX || 'Player X';
+      const no = entry.nameO || 'Player O';
+      label = `${nx} vs ${no}`;
+    } else {
+      const winnerName = entry.winner === 'X' ? (entry.nameX || 'Player X') : (entry.nameO || 'Player O');
+      label = `${winnerName} won`;
+    }
+    return `<div class="history-entry">
+      <span class="history-entry-left">
+        <span class="history-icon">${icon}</span>
+        <span class="history-detail">
+          <span class="history-label">${label}</span>
+          <span class="history-round">#${entry.round}</span>
+        </span>
+      </span>
+      <span class="history-time">${timeAgo(entry.timestamp)}</span>
+    </div>`;
+  }).join('');
 }
 
 function clearHistory() {
