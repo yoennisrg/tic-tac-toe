@@ -2,6 +2,7 @@ const board = document.getElementById('board');
 const cells = document.querySelectorAll('.cell');
 const status = document.getElementById('status');
 const resetBtn = document.getElementById('reset');
+const undoBtn = document.getElementById('undoBtn');
 const resetScoreBtn = document.getElementById('resetScore');
 const scoreDisplay = document.getElementById('score');
 const themeToggle = document.getElementById('themeToggle');
@@ -65,6 +66,8 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let moveHistory = [];
+let undoUsed = false;
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -143,6 +146,8 @@ function handleCellClick(e) {
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
   setNamesDisabled(true);
+  moveHistory.push({ index, player: currentPlayer });
+  updateUndoButton();
 
   audio.playMove();
 
@@ -212,6 +217,7 @@ function checkWin() {
       const style = getComputedStyle(document.documentElement);
       const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
       drawWinLine(pattern, winColor);
+      updateUndoButton();
       return true;
     }
   }
@@ -224,21 +230,49 @@ function checkDraw() {
     audio.playDraw();
     status.textContent = "It's a draw!";
     saveGameHistory('Draw');
+    updateUndoButton();
     return true;
   }
   return false;
+}
+
+function updateUndoButton() {
+  undoBtn.disabled = !gameActive || moveHistory.length === 0 || undoUsed;
+}
+
+function handleUndo() {
+  if (!gameActive || moveHistory.length === 0 || undoUsed) return;
+
+  const move = moveHistory.pop();
+  const cell = cells[move.index];
+
+  cell.classList.add('undo-fade');
+  cell.addEventListener('animationend', function onFade() {
+    cell.removeEventListener('animationend', onFade);
+    cell.innerHTML = '';
+    cell.classList.remove('x', 'o', 'undo-fade');
+  }, { once: true });
+
+  gameState[move.index] = '';
+  currentPlayer = move.player;
+  undoUsed = true;
+  updateUndoButton();
+  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
 }
 
 function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
+  moveHistory = [];
+  undoUsed = false;
   status.textContent = `${getPlayerName('X')}'s turn`;
   setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
     cell.classList.remove('x', 'o', 'win');
   });
+  updateUndoButton();
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -327,6 +361,7 @@ function toggleMute() {
 
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
 resetBtn.addEventListener('click', resetGame);
+undoBtn.addEventListener('click', handleUndo);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
@@ -334,3 +369,4 @@ clearHistoryBtn.addEventListener('click', clearHistory);
 
 triggerBoardEnter();
 renderHistory();
+updateUndoButton();

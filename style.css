@@ -215,6 +215,21 @@ h1 {
   to { stroke-dashoffset: 0; }
 }
 
+@keyframes undo-fade {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+.cell.undo-fade {
+  animation: undo-fade 0.25s ease-out forwards;
+}
+
 .reset {
   padding: 0.75rem 2rem;
   font-size: 0.85rem;
@@ -241,6 +256,24 @@ h1 {
 .reset-score {
   background: linear-gradient(135deg, var(--btn-reset-bg-start), var(--btn-reset-bg-end));
   margin-left: 0.5rem;
+}
+
+.undo-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  margin-left: 0.5rem;
+}
+
+.undo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.undo-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.4;
 }
 
 .history {
