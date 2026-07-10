@@ -337,6 +337,129 @@ h1 {
   transform: scale(1.1);
 }
 
+.settings-panel {
+  position: fixed;
+  top: 70px;
+  right: 1rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 8px 32px var(--glass-shadow);
+  z-index: 10;
+  display: none;
+  min-width: 200px;
+}
+
+.settings-panel.open {
+  display: block;
+}
+
+.settings-content h3 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.toggle-switch {
+  appearance: none;
+  width: 40px;
+  height: 22px;
+  background: var(--cell-bg);
+  border-radius: 11px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+  border: none;
+  outline: none;
+}
+
+.toggle-switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: var(--text);
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.toggle-switch:checked {
+  background: var(--btn-bg-start);
+}
+
+.toggle-switch:checked::before {
+  transform: translateX(18px);
+}
+
+.duration-select {
+  background: var(--cell-bg);
+  color: var(--text);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.3s, color 0.3s;
+}
+
+.duration-row.hidden {
+  display: none;
+}
+
+.timer-ring {
+  position: absolute;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.timer-ring.active {
+  opacity: 1;
+}
+
+.ring-bg {
+  fill: none;
+  stroke: var(--cell-bg);
+  stroke-width: 3;
+}
+
+.ring-progress {
+  fill: none;
+  stroke: var(--timer-color, #22c55e);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  stroke-dasharray: 283;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.3s;
+}
+
+.ring-progress.warning {
+  stroke: #eab308;
+}
+
+.ring-progress.danger {
+  stroke: #ef4444;
+}
+
 @keyframes cell-enter {
   from {
     opacity: 0;

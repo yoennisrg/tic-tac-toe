@@ -10,6 +10,13 @@ const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistory');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsPanel = document.getElementById('settingsPanel');
+const timerToggle = document.getElementById('timerToggle');
+const timerDuration = document.getElementById('timerDuration');
+const durationRow = document.getElementById('durationRow');
+const timerOverlay = document.getElementById('timerOverlay');
+const ringProgress = document.getElementById('ringProgress');
 
 const audio = {
   ctx: null,
@@ -65,10 +72,22 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let timerInterval = null;
+let timeLeft = 0;
+let consecutiveTimeouts = { X: 0, O: 0 };
+let isTabHidden = false;
+let lastPlayedIndex = -1;
+const CIRCUMFERENCE = 2 * Math.PI * 45;
+
+const getTimerEnabled = () => localStorage.getItem('timerEnabled') === 'true';
+const getTimerDuration = () => parseInt(localStorage.getItem('timerDuration') || '10');
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
   canvas.height = board.offsetHeight;
+  if (lastPlayedIndex >= 0 && timerOverlay.classList.contains('active')) {
+    positionTimerOverlay(lastPlayedIndex);
+  }
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -114,6 +133,112 @@ function updateStatus() {
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
 }
 
+function toggleSettings() {
+  settingsPanel.classList.toggle('open');
+}
+
+function onTimerToggle() {
+  const enabled = timerToggle.checked;
+  localStorage.setItem('timerEnabled', enabled);
+  durationRow.classList.toggle('hidden', !enabled);
+  if (enabled) {
+    startTimer();
+  } else {
+    stopTimer();
+  }
+}
+
+function onDurationChange() {
+  localStorage.setItem('timerDuration', timerDuration.value);
+  if (timerToggle.checked && gameActive) {
+    startTimer();
+  }
+}
+
+function positionTimerOverlay(index) {
+  const cell = cells[index];
+  const boardRect = board.getBoundingClientRect();
+  const cellRect = cell.getBoundingClientRect();
+  const left = cellRect.left - boardRect.left;
+  const top = cellRect.top - boardRect.top;
+  const size = cellRect.width;
+  timerOverlay.style.left = left + 'px';
+  timerOverlay.style.top = top + 'px';
+  timerOverlay.style.width = size + 'px';
+  timerOverlay.style.height = size + 'px';
+}
+
+function startTimer() {
+  stopTimer();
+  if (!timerToggle.checked || !gameActive || isTabHidden || lastPlayedIndex < 0) return;
+  
+  timeLeft = getTimerDuration();
+  positionTimerOverlay(lastPlayedIndex);
+  timerOverlay.classList.add('active');
+  updateTimerRing();
+  
+  timerInterval = setInterval(() => {
+    if (isTabHidden) return;
+    
+    timeLeft -= 0.1;
+    updateTimerRing();
+    
+    if (timeLeft <= 0) {
+      handleTimeout();
+    }
+  }, 100);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  timerOverlay.classList.remove('active');
+}
+
+function updateTimerRing() {
+  const duration = getTimerDuration();
+  const progress = Math.max(0, timeLeft / duration);
+  const offset = CIRCUMFERENCE * (1 - progress);
+  
+  ringProgress.style.strokeDashoffset = offset;
+  ringProgress.classList.remove('warning', 'danger');
+  
+  if (timeLeft <= 3) {
+    ringProgress.classList.add('danger');
+  } else if (timeLeft <= 5) {
+    ringProgress.classList.add('warning');
+  }
+}
+
+function handleTimeout() {
+  stopTimer();
+  consecutiveTimeouts[currentPlayer]++;
+  
+  if (consecutiveTimeouts[currentPlayer] >= 3) {
+    gameActive = false;
+    const winner = currentPlayer === 'X' ? 'O' : 'X';
+    status.textContent = `${getPlayerName(currentPlayer)} forfeits! ${getPlayerName(winner)} wins!`;
+    if (winner === 'X') scoreX++; else scoreO++;
+    localStorage.setItem('scoreX', scoreX);
+    localStorage.setItem('scoreO', scoreO);
+    updateScoreDisplay();
+    saveGameHistory(winner);
+    return;
+  }
+  
+  status.textContent = `${getPlayerName(currentPlayer)}'s turn forfeited!`;
+  
+  setTimeout(() => {
+    if (!gameActive) return;
+    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    consecutiveTimeouts[currentPlayer] = 0;
+    updateStatus();
+    startTimer();
+  }, 1000);
+}
+
 function setNamesDisabled(disabled) {
   nameXInput.disabled = disabled;
   nameOInput.disabled = disabled;
@@ -145,12 +270,16 @@ function handleCellClick(e) {
   setNamesDisabled(true);
 
   audio.playMove();
+  stopTimer();
+  consecutiveTimeouts[currentPlayer] = 0;
 
   if (checkWin()) return;
   if (checkDraw()) return;
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+  lastPlayedIndex = parseInt(index);
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  startTimer();
 }
 
 function getCellCenter(index) {
@@ -233,6 +362,7 @@ function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
+  lastPlayedIndex = -1;
   status.textContent = `${getPlayerName('X')}'s turn`;
   setNamesDisabled(false);
   cells.forEach(cell => {
@@ -243,6 +373,8 @@ function resetGame() {
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   triggerBoardEnter();
+  consecutiveTimeouts = { X: 0, O: 0 };
+  stopTimer();
 }
 
 function triggerBoardEnter() {
@@ -331,6 +463,27 @@ resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
+settingsToggle.addEventListener('click', toggleSettings);
+timerToggle.addEventListener('change', onTimerToggle);
+timerDuration.addEventListener('change', onDurationChange);
+
+timerToggle.checked = getTimerEnabled();
+timerDuration.value = getTimerDuration();
+durationRow.classList.toggle('hidden', !timerToggle.checked);
+
+document.addEventListener('visibilitychange', () => {
+  isTabHidden = document.hidden;
+  if (!isTabHidden && timerToggle.checked && gameActive) {
+    startTimer();
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!settingsPanel.contains(e.target) && e.target !== settingsToggle) {
+    settingsPanel.classList.remove('open');
+  }
+});
 
 triggerBoardEnter();
 renderHistory();
+startTimer();

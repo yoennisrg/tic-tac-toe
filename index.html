@@ -12,7 +12,25 @@
 <body>
   <div class="top-buttons">
     <button class="top-btn mute-toggle" id="muteToggle" aria-label="Toggle sound">🔊</button>
+    <button class="top-btn settings-toggle" id="settingsToggle" aria-label="Settings">⚙️</button>
     <button class="top-btn theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
+  </div>
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-content">
+      <h3>Settings</h3>
+      <label class="setting-row">
+        <span>Countdown Timer</span>
+        <input type="checkbox" id="timerToggle" class="toggle-switch">
+      </label>
+      <label class="setting-row" id="durationRow">
+        <span>Duration</span>
+        <select id="timerDuration" class="duration-select">
+          <option value="5">5s</option>
+          <option value="10" selected>10s</option>
+          <option value="15">15s</option>
+        </select>
+      </label>
+    </div>
   </div>
   <div class="container">
     <h1>Tic-Tac-Toe</h1>
@@ -33,6 +51,10 @@
       <div class="cell" data-index="7"></div>
       <div class="cell" data-index="8"></div>
       <canvas id="winCanvas"></canvas>
+      <svg id="timerOverlay" class="timer-ring" viewBox="0 0 100 100">
+        <circle class="ring-bg" cx="50" cy="50" r="45"/>
+        <circle id="ringProgress" class="ring-progress" cx="50" cy="50" r="45"/>
+      </svg>
     </div>
     <div class="score" id="score">X: 0 | O: 0</div>
     <button class="reset" id="reset">New Game</button>
