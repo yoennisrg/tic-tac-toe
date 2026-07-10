@@ -238,6 +238,38 @@ h1 {
   transform: translateY(0);
 }
 
+.score {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--cell-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s, background 0.3s, color 0.3s;
+}
+
+.score-badge--x {
+  border-color: var(--color-x);
+  color: var(--color-x);
+}
+
+.score-badge--o {
+  border-color: var(--color-o);
+  color: var(--color-o);
+}
+
 .reset-score {
   background: linear-gradient(135deg, var(--btn-reset-bg-start), var(--btn-reset-bg-end));
   margin-left: 0.5rem;
