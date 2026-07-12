@@ -65,6 +65,9 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let confettiAnimId = null;
+let confettiParticles = [];
+let activeWinLine = null;
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -188,10 +191,98 @@ function drawWinLine(pattern, color) {
 
     if (progress < 1) {
       winAnimId = requestAnimationFrame(animate);
+    } else {
+      activeWinLine = { start, end, color };
     }
   }
 
   winAnimId = requestAnimationFrame(animate);
+}
+
+function createConfettiParticle(color) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const angle = Math.random() * Math.PI * 2;
+  const speed = 2 + Math.random() * 6;
+  return {
+    x: cx,
+    y: cy,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed - 3,
+    size: 4 + Math.random() * 6,
+    color,
+    rotation: Math.random() * 360,
+    rotSpeed: (Math.random() - 0.5) * 12,
+    gravity: 0.15 + Math.random() * 0.1,
+    alpha: 1,
+    decay: 0.012 + Math.random() * 0.008,
+    shape: Math.random() > 0.5 ? 'rect' : 'circle',
+  };
+}
+
+function triggerConfetti(winnerColor) {
+  const palette = [
+    winnerColor,
+    winnerColor,
+    winnerColor,
+    '#ffffff',
+    '#facc15',
+    '#34d399',
+    '#a78bfa',
+    '#fb923c',
+  ];
+  const count = 80 + Math.floor(Math.random() * 41);
+  confettiParticles = [];
+  for (let i = 0; i < count; i++) {
+    confettiParticles.push(createConfettiParticle(palette[Math.floor(Math.random() * palette.length)]));
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (activeWinLine) {
+      ctx.beginPath();
+      ctx.moveTo(activeWinLine.start.x, activeWinLine.start.y);
+      ctx.lineTo(activeWinLine.end.x, activeWinLine.end.y);
+      ctx.strokeStyle = activeWinLine.color;
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+    ctx.save();
+    for (let i = confettiParticles.length - 1; i >= 0; i--) {
+      const p = confettiParticles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity;
+      p.vx *= 0.99;
+      p.rotation += p.rotSpeed;
+      p.alpha -= p.decay;
+      if (p.alpha <= 0) {
+        confettiParticles.splice(i, 1);
+        continue;
+      }
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rotation * Math.PI) / 180);
+      if (p.shape === 'rect') {
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+    if (confettiParticles.length > 0) {
+      confettiAnimId = requestAnimationFrame(animate);
+    } else {
+      confettiAnimId = null;
+    }
+  }
+  confettiAnimId = requestAnimationFrame(animate);
 }
 
 function checkWin() {
@@ -212,6 +303,7 @@ function checkWin() {
       const style = getComputedStyle(document.documentElement);
       const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
       drawWinLine(pattern, winColor);
+      triggerConfetti(winColor);
       return true;
     }
   }
@@ -241,6 +333,10 @@ function resetGame() {
   });
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
+  if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+  confettiAnimId = null;
+  confettiParticles = [];
+  activeWinLine = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   triggerBoardEnter();
 }
