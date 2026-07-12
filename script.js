@@ -3,6 +3,8 @@ const cells = document.querySelectorAll('.cell');
 const status = document.getElementById('status');
 const resetBtn = document.getElementById('reset');
 const resetScoreBtn = document.getElementById('resetScore');
+const shareBtn = document.getElementById('shareBtn');
+const gameActions = document.getElementById('gameActions');
 const scoreDisplay = document.getElementById('score');
 const themeToggle = document.getElementById('themeToggle');
 const muteToggle = document.getElementById('muteToggle');
@@ -63,6 +65,7 @@ const SVG_O = '<svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle
 
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
+let moveHistory = [];
 let gameActive = true;
 let winAnimId = null;
 
@@ -140,6 +143,7 @@ function handleCellClick(e) {
   if (!gameActive || gameState[index] !== '') return;
 
   gameState[index] = currentPlayer;
+  moveHistory.push([...gameState]);
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
   setNamesDisabled(true);
@@ -209,6 +213,7 @@ function checkWin() {
       localStorage.setItem('scoreO', scoreO);
       updateScoreDisplay();
       saveGameHistory(currentPlayer);
+      showShareBtn();
       const style = getComputedStyle(document.documentElement);
       const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
       drawWinLine(pattern, winColor);
@@ -224,15 +229,26 @@ function checkDraw() {
     audio.playDraw();
     status.textContent = "It's a draw!";
     saveGameHistory('Draw');
+    showShareBtn();
     return true;
   }
   return false;
 }
 
+function showShareBtn() {
+  shareBtn.style.display = 'inline-block';
+}
+
+function hideShareBtn() {
+  shareBtn.style.display = 'none';
+}
+
 function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
+  moveHistory = [];
   gameActive = true;
+  hideShareBtn();
   status.textContent = `${getPlayerName('X')}'s turn`;
   setNamesDisabled(false);
   cells.forEach(cell => {
@@ -305,6 +321,198 @@ function clearHistory() {
   renderHistory();
 }
 
+function getThemeColors() {
+  const style = getComputedStyle(document.documentElement);
+  return {
+    bg: style.getPropertyValue('--bg').trim(),
+    text: style.getPropertyValue('--text').trim(),
+    cellBg: style.getPropertyValue('--cell-bg').trim(),
+    colorX: style.getPropertyValue('--color-x').trim(),
+    colorO: style.getPropertyValue('--color-o').trim(),
+    glassBg: style.getPropertyValue('--glass-bg').trim(),
+    glassBorder: style.getPropertyValue('--glass-border').trim(),
+  };
+}
+
+function drawShareCanvas(state, winner) {
+  const W = 500;
+  const H = 640;
+  const colors = getThemeColors();
+  const cellSize = 120;
+  const gap = 6;
+  const boardLeft = (W - 3 * cellSize - 2 * gap) / 2;
+  const boardTop = 180;
+
+  const cvs = document.createElement('canvas');
+  cvs.width = W;
+  cvs.height = H;
+  const c = cvs.getContext('2d');
+
+  // Background
+  c.fillStyle = colors.bg;
+  c.fillRect(0, 0, W, H);
+
+  // Title
+  c.fillStyle = colors.text;
+  c.font = 'bold 28px Inter, system-ui, sans-serif';
+  c.textAlign = 'center';
+  c.fillText('Tic-Tac-Toe', W / 2, 50);
+
+  // Player names
+  c.font = '16px Inter, system-ui, sans-serif';
+  c.fillText(`${getPlayerName('X')} vs ${getPlayerName('O')}`, W / 2, 80);
+
+  // Round
+  c.font = '13px Inter, system-ui, sans-serif';
+  c.fillStyle = '#888';
+  c.fillText(`Round #${roundNumber}`, W / 2, 105);
+
+  // Date
+  const now = new Date();
+  c.fillText(now.toLocaleDateString() + ' ' + now.toLocaleTimeString(), W / 2, 125);
+
+  // Board background
+  const boardBg = colors.glassBg;
+  c.fillStyle = boardBg;
+  const br = 8;
+  const bw = 3 * cellSize + 2 * gap + 2 * br;
+  const bh = 3 * cellSize + 2 * gap + 2 * br;
+  roundRect(c, boardLeft - br, boardTop - br, bw, bh, 8, boardBg);
+  c.strokeStyle = colors.glassBorder;
+  c.lineWidth = 1;
+  roundRect(c, boardLeft - br, boardTop - br, bw, bh, 8, null, colors.glassBorder);
+
+  // Cells
+  for (let i = 0; i < 9; i++) {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const cx = boardLeft + col * (cellSize + gap);
+    const cy = boardTop + row * (cellSize + gap);
+    c.fillStyle = colors.cellBg;
+    c.beginPath();
+    c.roundRect(cx + 1, cy + 1, cellSize - 2, cellSize - 2, 6);
+    c.fill();
+  }
+
+  // X/O symbols
+  for (let i = 0; i < 9; i++) {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const cx = boardLeft + col * (cellSize + gap) + cellSize / 2;
+    const cy = boardTop + row * (cellSize + gap) + cellSize / 2;
+    const strokeW = Math.max(3, cellSize * 0.06);
+
+    if (state[i] === 'X') {
+      c.strokeStyle = colors.colorX;
+      c.lineWidth = strokeW;
+      c.lineCap = 'round';
+      const pad = cellSize * 0.22;
+      c.beginPath();
+      c.moveTo(cx - pad, cy - pad);
+      c.lineTo(cx + pad, cy + pad);
+      c.stroke();
+      c.beginPath();
+      c.moveTo(cx + pad, cy - pad);
+      c.lineTo(cx - pad, cy + pad);
+      c.stroke();
+    } else if (state[i] === 'O') {
+      c.strokeStyle = colors.colorO;
+      c.lineWidth = strokeW;
+      c.lineCap = 'round';
+      const r = cellSize * 0.28;
+      c.beginPath();
+      c.arc(cx, cy, r, 0, Math.PI * 2);
+      c.stroke();
+    }
+  }
+
+  // Result
+  c.font = 'bold 22px Inter, system-ui, sans-serif';
+  c.textAlign = 'center';
+  const resultY = boardTop + 3 * cellSize + 2 * gap + 50;
+  if (winner === 'Draw') {
+    c.fillStyle = '#888';
+    c.fillText("It's a draw!", W / 2, resultY);
+  } else if (winner === 'X') {
+    c.fillStyle = colors.colorX;
+    c.fillText(`${getPlayerName('X')} wins!`, W / 2, resultY);
+  } else {
+    c.fillStyle = colors.colorO;
+    c.fillText(`${getPlayerName('O')} wins!`, W / 2, resultY);
+  }
+
+  return cvs;
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.stroke(); }
+}
+
+function shareGame() {
+  const winner = gameActive ? null : (status.textContent.includes('wins') ? currentPlayer : 'Draw');
+  if (!winner) return;
+
+  const canvas = drawShareCanvas(gameState, winner);
+
+  // Show options
+  const actions = gameActions;
+  const existing = actions.querySelector('.share-options');
+  if (existing) existing.remove();
+
+  const opts = document.createElement('div');
+  opts.className = 'share-options';
+  opts.innerHTML = `
+    <button class="reset share-copy">Copy Image</button>
+    <button class="reset share-download">Download PNG</button>
+  `;
+
+  opts.querySelector('.share-copy').addEventListener('click', () => {
+    canvas.toBlob(async (blob) => {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        showShareToast('Image copied to clipboard!');
+      } catch {
+        showShareToast('Clipboard copy not supported. Try downloading instead.');
+      }
+      opts.remove();
+    }, 'image/png');
+  });
+
+  opts.querySelector('.share-download').addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = `tic-tac-toe-round-${roundNumber}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    opts.remove();
+  });
+
+  actions.appendChild(opts);
+}
+
+function showShareToast(msg) {
+  let toast = document.querySelector('.share-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'share-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('visible');
+  setTimeout(() => toast.classList.remove('visible'), 2500);
+}
+
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   themeToggle.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}\u{FE0F}';
@@ -331,6 +539,7 @@ resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
+shareBtn.addEventListener('click', shareGame);
 
 triggerBoardEnter();
 renderHistory();
