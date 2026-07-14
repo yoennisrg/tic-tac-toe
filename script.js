@@ -10,6 +10,10 @@ const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistory');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
+const tokenX = document.getElementById('tokenX');
+const tokenO = document.getElementById('tokenO');
+const checkX = document.getElementById('checkX');
+const checkO = document.getElementById('checkO');
 
 const audio = {
   ctx: null,
@@ -109,9 +113,29 @@ function onNameInput(player, input) {
 nameXInput.addEventListener('input', () => onNameInput('X', nameXInput));
 nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
 
+function updateTurnIndicator() {
+  tokenX.classList.remove('active', 'winner', 'frozen');
+  tokenO.classList.remove('active', 'winner', 'frozen');
+  checkX.style.display = 'none';
+  checkO.style.display = 'none';
+
+  if (!gameActive) {
+    tokenX.classList.add('frozen');
+    tokenO.classList.add('frozen');
+    return;
+  }
+
+  if (currentPlayer === 'X') {
+    tokenX.classList.add('active');
+  } else {
+    tokenO.classList.add('active');
+  }
+}
+
 function updateStatus() {
   if (!gameActive) return;
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  updateTurnIndicator();
 }
 
 function setNamesDisabled(disabled) {
@@ -151,6 +175,7 @@ function handleCellClick(e) {
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  updateTurnIndicator();
 }
 
 function getCellCenter(index) {
@@ -204,6 +229,12 @@ function checkWin() {
       cells[c].classList.add('win');
       audio.playWin();
       status.textContent = `${getPlayerName(currentPlayer)} wins!`;
+      updateTurnIndicator();
+      const winToken = currentPlayer === 'X' ? tokenX : tokenO;
+      winToken.classList.add('winner', 'frozen');
+      winToken.querySelector('.turn-indicator__check').style.display = 'flex';
+      const otherToken = currentPlayer === 'X' ? tokenO : tokenX;
+      otherToken.classList.add('frozen');
       if (currentPlayer === 'X') scoreX++; else scoreO++;
       localStorage.setItem('scoreX', scoreX);
       localStorage.setItem('scoreO', scoreO);
@@ -223,6 +254,9 @@ function checkDraw() {
     gameActive = false;
     audio.playDraw();
     status.textContent = "It's a draw!";
+    updateTurnIndicator();
+    tokenX.classList.add('frozen');
+    tokenO.classList.add('frozen');
     saveGameHistory('Draw');
     return true;
   }
@@ -234,6 +268,7 @@ function resetGame() {
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
   status.textContent = `${getPlayerName('X')}'s turn`;
+  updateTurnIndicator();
   setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
