@@ -65,6 +65,7 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let moveCount = 0;
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -104,6 +105,7 @@ function onNameInput(player, input) {
   saveName(player, input.value);
   updateStatus();
   updateScoreDisplay();
+  renderStats();
 }
 
 nameXInput.addEventListener('input', () => onNameInput('X', nameXInput));
@@ -142,6 +144,7 @@ function handleCellClick(e) {
   gameState[index] = currentPlayer;
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
+  moveCount++;
   setNamesDisabled(true);
 
   audio.playMove();
@@ -208,6 +211,7 @@ function checkWin() {
       localStorage.setItem('scoreX', scoreX);
       localStorage.setItem('scoreO', scoreO);
       updateScoreDisplay();
+      updateStatsOnWin(currentPlayer);
       saveGameHistory(currentPlayer);
       const style = getComputedStyle(document.documentElement);
       const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
@@ -223,6 +227,7 @@ function checkDraw() {
     gameActive = false;
     audio.playDraw();
     status.textContent = "It's a draw!";
+    updateStatsOnDraw();
     saveGameHistory('Draw');
     return true;
   }
@@ -233,6 +238,7 @@ function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
+  moveCount = 0;
   status.textContent = `${getPlayerName('X')}'s turn`;
   setNamesDisabled(false);
   cells.forEach(cell => {
@@ -305,6 +311,109 @@ function clearHistory() {
   renderHistory();
 }
 
+function getStats() {
+  try {
+    return JSON.parse(localStorage.getItem('stats'));
+  } catch {
+    return null;
+  }
+}
+
+function defaultStats() {
+  return { totalGames: 0, drawCount: 0, winStreakX: 0, bestStreakX: 0, winStreakO: 0, bestStreakO: 0, movesToWinX: 0, winsX: 0, gamesWonX: 0, movesToWinO: 0, winsO: 0, gamesWonO: 0 };
+}
+
+function saveStats(stats) {
+  localStorage.setItem('stats', JSON.stringify(stats));
+}
+
+function updateStatsOnWin(winner) {
+  let stats = getStats();
+  if (!stats) stats = defaultStats();
+  stats.totalGames++;
+  if (winner === 'X') {
+    stats.winsX++;
+    stats.winStreakX++;
+    stats.winStreakO = 0;
+    if (stats.winStreakX > stats.bestStreakX) stats.bestStreakX = stats.winStreakX;
+    stats.movesToWinX += moveCount;
+    stats.gamesWonX++;
+  } else {
+    stats.winsO++;
+    stats.winStreakO++;
+    stats.winStreakX = 0;
+    if (stats.winStreakO > stats.bestStreakO) stats.bestStreakO = stats.winStreakO;
+    stats.movesToWinO += moveCount;
+    stats.gamesWonO++;
+  }
+  saveStats(stats);
+  renderStats();
+}
+
+function updateStatsOnDraw() {
+  let stats = getStats();
+  if (!stats) stats = defaultStats();
+  stats.totalGames++;
+  stats.drawCount++;
+  stats.winStreakX = 0;
+  stats.winStreakO = 0;
+  saveStats(stats);
+  renderStats();
+}
+
+function renderStats() {
+  const stats = getStats();
+  const body = document.getElementById('statsBody');
+  if (!stats || stats.totalGames === 0) {
+    body.innerHTML = '<div class="stats-empty">No stats yet. Play some games!</div>';
+    return;
+  }
+  const total = stats.totalGames;
+  const xPct = (stats.winsX / total * 100).toFixed(0);
+  const oPct = (stats.winsO / total * 100).toFixed(0);
+  const dPct = (stats.drawCount / total * 100).toFixed(0);
+  const avgX = stats.gamesWonX > 0 ? (stats.movesToWinX / stats.gamesWonX).toFixed(1) : '-';
+  const avgO = stats.gamesWonO > 0 ? (stats.movesToWinO / stats.gamesWonO).toFixed(1) : '-';
+
+  body.innerHTML = `
+    <div class="stat-total">Total Games: ${total}</div>
+    <div class="win-rate-bar">
+      <div class="win-rate-bar-seg win-rate-bar-x" style="width:${xPct}%"></div>
+      <div class="win-rate-bar-seg win-rate-bar-d" style="width:${dPct}%"></div>
+      <div class="win-rate-bar-seg win-rate-bar-o" style="width:${oPct}%"></div>
+    </div>
+    <div class="win-rate-labels">
+      <span class="label-x">${getPlayerName('X')} ${xPct}%</span>
+      <span class="label-d">Draw ${dPct}%</span>
+      <span class="label-o">${getPlayerName('O')} ${oPct}%</span>
+    </div>
+    <div class="streaks">
+      <div class="streak-entry">
+        <div>${getPlayerName('X')}</div>
+        <div class="streak-current">${stats.winStreakX}</div>
+        <div class="streak-best">best: ${stats.bestStreakX}</div>
+      </div>
+      <div class="streak-entry">
+        <div>${getPlayerName('O')}</div>
+        <div class="streak-current">${stats.winStreakO}</div>
+        <div class="streak-best">best: ${stats.bestStreakO}</div>
+      </div>
+    </div>
+    <div class="avg-moves">Avg moves to win</div>
+    <div class="avg-moves-values">
+      <span class="label-x">${getPlayerName('X')}: ${avgX}</span>
+      <span class="label-o">${getPlayerName('O')}: ${avgO}</span>
+    </div>
+    <button class="reset reset-stats" id="resetStats">Reset Stats</button>
+  `;
+  document.getElementById('resetStats').addEventListener('click', resetStats);
+}
+
+function resetStats() {
+  localStorage.removeItem('stats');
+  renderStats();
+}
+
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   themeToggle.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}\u{FE0F}';
@@ -332,5 +441,20 @@ themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
 
+const statsToggle = document.getElementById('statsToggle');
+statsToggle.addEventListener('click', () => {
+  const body = document.getElementById('statsBody');
+  body.classList.toggle('collapsed');
+  statsToggle.classList.toggle('collapsed');
+  localStorage.setItem('statsPanelOpen', !body.classList.contains('collapsed'));
+});
+
+const statsOpen = localStorage.getItem('statsPanelOpen') !== 'false';
+if (!statsOpen) {
+  document.getElementById('statsBody').classList.add('collapsed');
+  statsToggle.classList.add('collapsed');
+}
+
 triggerBoardEnter();
 renderHistory();
+renderStats();
