@@ -2,7 +2,7 @@ name: Anthill
 
 on:
   schedule:
-    - cron: '*/1 * * * *'   # poll Intent every minute (GitHub minimum)
+    - cron: '0 * * * *'   # poll Intent every hour
   workflow_dispatch:         # manual trigger for testing
 
 jobs:
@@ -12,10 +12,5 @@ jobs:
     steps:
       - uses: yoennisrg/anthill-action@main
         with:
-          intent_url: ${{ secrets.ANTHILL_INTENT_URL }}
           client_id: ${{ secrets.ANTHILL_CLIENT_ID }}
-          github_token: ${{ secrets.ANTHILL_GITHUB_TOKEN }}
-          opencode_api_key: ${{ secrets.OPENCODE_API_KEY }}
-          brave_api_key: ${{ secrets.BRAVE_API_KEY }}
-          branch: main
-          merge: manual
+          client_secret: ${{ secrets.ANTHILL_CLIENT_SECRET }}
