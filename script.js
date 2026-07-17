@@ -65,6 +65,7 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let drawTimeoutId = null;
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -223,7 +224,19 @@ function checkDraw() {
     gameActive = false;
     audio.playDraw();
     status.textContent = "It's a draw!";
+    status.classList.add('status--draw');
+    resetBtn.disabled = true;
+    board.classList.remove('entered');
+    cells.forEach(cell => cell.classList.add('draw'));
     saveGameHistory('Draw');
+
+    drawTimeoutId = setTimeout(() => {
+      cells.forEach(cell => cell.classList.remove('draw'));
+      status.classList.remove('status--draw');
+      resetBtn.disabled = false;
+      drawTimeoutId = null;
+    }, 1800);
+
     return true;
   }
   return false;
@@ -234,13 +247,19 @@ function resetGame() {
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
   status.textContent = `${getPlayerName('X')}'s turn`;
+  status.classList.remove('status--draw');
   setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
-    cell.classList.remove('x', 'o', 'win');
+    cell.classList.remove('x', 'o', 'win', 'draw');
   });
+  resetBtn.disabled = false;
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
+  if (drawTimeoutId) {
+    clearTimeout(drawTimeoutId);
+    drawTimeoutId = null;
+  }
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   triggerBoardEnter();
 }
