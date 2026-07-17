@@ -133,8 +133,39 @@ const winPatterns = [
   [0, 4, 8], [2, 4, 6]
 ];
 
+function showGhost(cell) {
+  if (!gameActive || gameState[cell.dataset.index] !== '') return;
+  if (cell.querySelector('.ghost')) return;
+
+  const ghost = document.createElement('span');
+  ghost.className = `ghost ${currentPlayer.toLowerCase()}`;
+  ghost.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
+  cell.appendChild(ghost);
+}
+
+function hideGhost(cell) {
+  const ghost = cell.querySelector('.ghost');
+  if (ghost) ghost.remove();
+}
+
+function updateGhosts() {
+  cells.forEach(cell => {
+    const ghost = cell.querySelector('.ghost');
+    if (!ghost) return;
+    ghost.className = `ghost ${currentPlayer.toLowerCase()}`;
+    ghost.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
+  });
+}
+
+function clearAllGhosts() {
+  cells.forEach(cell => {
+    const ghost = cell.querySelector('.ghost');
+    if (ghost) ghost.remove();
+  });
+}
+
 function handleCellClick(e) {
-  const cell = e.target;
+  const cell = e.currentTarget;
   const index = cell.dataset.index;
 
   if (!gameActive || gameState[index] !== '') return;
@@ -151,6 +182,7 @@ function handleCellClick(e) {
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  updateGhosts();
 }
 
 function getCellCenter(index) {
@@ -199,6 +231,7 @@ function checkWin() {
     const [a, b, c] = pattern;
     if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
       gameActive = false;
+      clearAllGhosts();
       cells[a].classList.add('win');
       cells[b].classList.add('win');
       cells[c].classList.add('win');
@@ -221,6 +254,7 @@ function checkWin() {
 function checkDraw() {
   if (gameState.every(cell => cell !== '')) {
     gameActive = false;
+    clearAllGhosts();
     audio.playDraw();
     status.textContent = "It's a draw!";
     saveGameHistory('Draw');
@@ -325,7 +359,11 @@ function toggleMute() {
   audio.muted = !audio.muted;
 }
 
-cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+cells.forEach(cell => {
+  cell.addEventListener('click', handleCellClick);
+  cell.addEventListener('mouseenter', () => showGhost(cell));
+  cell.addEventListener('mouseleave', () => hideGhost(cell));
+});
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
