@@ -35,8 +35,19 @@
       <canvas id="winCanvas"></canvas>
     </div>
     <div class="score" id="score">X: 0 | O: 0</div>
-    <button class="reset" id="reset">New Game</button>
-    <button class="reset reset-score" id="resetScore">Reset Score</button>
+    <div class="game-actions" id="gameActions">
+      <button class="reset" id="reset">New Game</button>
+      <button class="reset reset-score" id="resetScore">Reset Score</button>
+      <button class="reset share-btn" id="shareBtn" hidden>Share</button>
+    </div>
+    <div class="share-panel" id="sharePanel" hidden>
+      <canvas id="replayCanvas" width="280" height="360"></canvas>
+      <div class="share-panel-actions">
+        <button class="reset share-copy" id="shareCopy">Copy Image</button>
+        <button class="reset share-download" id="shareDownload">Download PNG</button>
+        <button class="reset share-close" id="shareClose">Close</button>
+      </div>
+    </div>
     <div class="history" id="history">
       <div class="history-header">
         <h2>Game History</h2>
