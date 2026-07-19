@@ -65,6 +65,7 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let drawTimeout = null;
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -223,10 +224,31 @@ function checkDraw() {
     gameActive = false;
     audio.playDraw();
     status.textContent = "It's a draw!";
+    status.classList.add('draw-status');
     saveGameHistory('Draw');
+    triggerDrawAnimation();
     return true;
   }
   return false;
+}
+
+function triggerDrawAnimation() {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  resetBtn.disabled = true;
+
+  if (prefersReducedMotion) {
+    cells.forEach(cell => cell.classList.add('draw'));
+    resetBtn.disabled = false;
+    return;
+  }
+
+  cells.forEach(cell => cell.classList.add('draw'));
+
+  drawTimeout = setTimeout(() => {
+    cells.forEach(cell => cell.classList.remove('draw'));
+    resetBtn.disabled = false;
+    drawTimeout = null;
+  }, 1800);
 }
 
 function resetGame() {
@@ -234,13 +256,19 @@ function resetGame() {
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
   status.textContent = `${getPlayerName('X')}'s turn`;
+  status.classList.remove('draw-status');
   setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
-    cell.classList.remove('x', 'o', 'win');
+    cell.classList.remove('x', 'o', 'win', 'draw');
   });
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
+  if (drawTimeout) {
+    clearTimeout(drawTimeout);
+    drawTimeout = null;
+  }
+  resetBtn.disabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   triggerBoardEnter();
 }
