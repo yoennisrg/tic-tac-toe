@@ -207,6 +207,34 @@ h1 {
   color: #fff;
 }
 
+.cell.draw {
+  animation: draw-pulse 0.6s ease-in-out 3;
+  color: #888;
+}
+
+@keyframes draw-pulse {
+  0%, 100% {
+    background: var(--cell-bg);
+    box-shadow: 0 0 0 rgba(136, 136, 136, 0);
+    transform: scale(1);
+  }
+  50% {
+    background: rgba(136, 136, 136, 0.25);
+    box-shadow: 0 0 20px rgba(136, 136, 136, 0.4);
+    transform: scale(1.05);
+  }
+}
+
+.status.draw-status {
+  animation: status-shake 0.5s ease-in-out;
+}
+
+@keyframes status-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
 @keyframes draw-line {
   to { stroke-dashoffset: 0; }
 }
@@ -362,4 +390,22 @@ h1 {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.draw {
+    animation: none;
+    background: rgba(136, 136, 136, 0.2);
+    color: #888;
+  }
+
+  .status.draw-status {
+    animation: none;
+  }
+}
+
+.reset:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
