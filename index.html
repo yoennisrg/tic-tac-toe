@@ -13,6 +13,12 @@
   <div class="top-buttons">
     <button class="top-btn mute-toggle" id="muteToggle" aria-label="Toggle sound">🔊</button>
     <button class="top-btn theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
+    <button class="top-btn settings-toggle" id="settingsToggle" aria-label="Open settings" aria-haspopup="dialog" aria-controls="settingsPanel">
+      <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
   </div>
   <div class="container">
     <h1>Tic-Tac-Toe</h1>
@@ -45,6 +51,43 @@
       <div class="history-list" id="historyList"></div>
     </div>
   </div>
+
+  <div class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
+    <div class="settings-backdrop" id="settingsBackdrop"></div>
+    <div class="settings-content">
+      <div class="settings-header">
+        <h2 id="settingsTitle">Settings</h2>
+        <button class="settings-close" id="settingsClose" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="settings-body">
+        <div class="color-settings">
+          <div class="color-group">
+            <h3>Player X</h3>
+            <div class="color-presets" id="colorPresetsX" role="radiogroup" aria-label="Player X preset colors"></div>
+            <div class="color-picker-row">
+              <label for="colorPickerX">Custom color</label>
+              <input type="color" id="colorPickerX" value="#00d4ff" aria-label="Player X custom color">
+            </div>
+          </div>
+          <div class="color-group">
+            <h3>Player O</h3>
+            <div class="color-presets" id="colorPresetsO" role="radiogroup" aria-label="Player O preset colors"></div>
+            <div class="color-picker-row">
+              <label for="colorPickerO">Custom color</label>
+              <input type="color" id="colorPickerO" value="#ff6b6b" aria-label="Player O custom color">
+            </div>
+          </div>
+        </div>
+        <button class="reset reset-colors" id="resetColors">Reset to Defaults</button>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>

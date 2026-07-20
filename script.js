@@ -61,6 +61,19 @@ const audio = {
 const SVG_X = '<svg class="symbol" viewBox="0 0 100 100"><line class="x-line" x1="20" y1="20" x2="80" y2="80"/><line class="x-line" x1="80" y1="20" x2="20" y2="80"/></svg>';
 const SVG_O = '<svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle" cx="50" cy="50" r="30"/></svg>';
 
+const DEFAULT_COLOR_X = '#00d4ff';
+const DEFAULT_COLOR_O = '#ff6b6b';
+
+const PRESETS_X = [
+  '#00d4ff', '#3b82f6', '#6366f1', '#a855f7',
+  '#ec4899', '#22c55e', '#14b8a6', '#f8fafc'
+];
+
+const PRESETS_O = [
+  '#ff6b6b', '#f43f5e', '#f97316', '#f59e0b',
+  '#84cc16', '#06b6d4', '#8b5cf6', '#1e293b'
+];
+
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
@@ -324,6 +337,130 @@ muteToggle.textContent = audio.muted ? '\u{1F507}' : '\u{1F50A}';
 function toggleMute() {
   audio.muted = !audio.muted;
 }
+
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsPanel = document.getElementById('settingsPanel');
+const settingsBackdrop = document.getElementById('settingsBackdrop');
+const settingsClose = document.getElementById('settingsClose');
+const colorPresetsX = document.getElementById('colorPresetsX');
+const colorPresetsO = document.getElementById('colorPresetsO');
+const colorPickerX = document.getElementById('colorPickerX');
+const colorPickerO = document.getElementById('colorPickerO');
+const resetColorsBtn = document.getElementById('resetColors');
+
+let playerColors = {
+  X: localStorage.getItem('colorX') || DEFAULT_COLOR_X,
+  O: localStorage.getItem('colorO') || DEFAULT_COLOR_O,
+};
+
+function applyPlayerColors() {
+  document.documentElement.style.setProperty('--color-x', playerColors.X);
+  document.documentElement.style.setProperty('--color-o', playerColors.O);
+}
+
+function savePlayerColors() {
+  localStorage.setItem('colorX', playerColors.X);
+  localStorage.setItem('colorO', playerColors.O);
+}
+
+function normalizeColor(color) {
+  return color.toLowerCase().trim();
+}
+
+function resolveColorConflict(player, desiredColor) {
+  const other = player === 'X' ? 'O' : 'X';
+  const normalizedDesired = normalizeColor(desiredColor);
+  const normalizedOther = normalizeColor(playerColors[other]);
+  if (normalizedDesired !== normalizedOther) {
+    return { [player]: desiredColor, [other]: playerColors[other] };
+  }
+
+  const otherDefault = other === 'X' ? DEFAULT_COLOR_X : DEFAULT_COLOR_O;
+  if (normalizeColor(otherDefault) !== normalizedDesired) {
+    return { [player]: desiredColor, [other]: otherDefault };
+  }
+
+  const otherPresets = other === 'X' ? PRESETS_X : PRESETS_O;
+  const fallback = otherPresets.find(c => normalizeColor(c) !== normalizedDesired);
+  return { [player]: desiredColor, [other]: fallback || otherDefault };
+}
+
+function setPlayerColor(player, color) {
+  const resolved = resolveColorConflict(player, color);
+  playerColors.X = resolved.X;
+  playerColors.O = resolved.O;
+  applyPlayerColors();
+  savePlayerColors();
+  updateColorControls();
+}
+
+function createPresetSwatches(container, player, presets) {
+  container.innerHTML = '';
+  presets.forEach((color, index) => {
+    const swatch = document.createElement('button');
+    swatch.className = 'color-swatch';
+    swatch.type = 'button';
+    swatch.style.backgroundColor = color;
+    swatch.dataset.color = color;
+    swatch.setAttribute('aria-label', `Player ${player} color ${index + 1}`);
+    swatch.addEventListener('click', () => setPlayerColor(player, color));
+    container.appendChild(swatch);
+  });
+}
+
+function updateColorControls() {
+  colorPickerX.value = playerColors.X;
+  colorPickerO.value = playerColors.O;
+
+  colorPresetsX.querySelectorAll('.color-swatch').forEach(swatch => {
+    swatch.classList.toggle('active', normalizeColor(swatch.dataset.color) === normalizeColor(playerColors.X));
+  });
+  colorPresetsO.querySelectorAll('.color-swatch').forEach(swatch => {
+    swatch.classList.toggle('active', normalizeColor(swatch.dataset.color) === normalizeColor(playerColors.O));
+  });
+}
+
+function openSettings() {
+  settingsPanel.hidden = false;
+  requestAnimationFrame(() => settingsPanel.classList.add('open'));
+  settingsClose.focus();
+}
+
+function closeSettings() {
+  settingsPanel.classList.remove('open');
+  setTimeout(() => {
+    settingsPanel.hidden = true;
+    settingsToggle.focus();
+  }, 300);
+}
+
+function resetColors() {
+  playerColors.X = DEFAULT_COLOR_X;
+  playerColors.O = DEFAULT_COLOR_O;
+  applyPlayerColors();
+  savePlayerColors();
+  updateColorControls();
+}
+
+createPresetSwatches(colorPresetsX, 'X', PRESETS_X);
+createPresetSwatches(colorPresetsO, 'O', PRESETS_O);
+
+applyPlayerColors();
+updateColorControls();
+
+colorPickerX.addEventListener('input', (e) => setPlayerColor('X', e.target.value));
+colorPickerO.addEventListener('input', (e) => setPlayerColor('O', e.target.value));
+resetColorsBtn.addEventListener('click', resetColors);
+
+settingsToggle.addEventListener('click', openSettings);
+settingsClose.addEventListener('click', closeSettings);
+settingsBackdrop.addEventListener('click', closeSettings);
+
+settingsPanel.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeSettings();
+  }
+});
 
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
 resetBtn.addEventListener('click', resetGame);
