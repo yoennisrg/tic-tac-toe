@@ -156,6 +156,12 @@ h1 {
   background: var(--cell-hover);
 }
 
+.cell:focus-visible,
+.cell:focus {
+  outline: 3px solid var(--color-x);
+  outline-offset: 2px;
+}
+
 @media (max-width: 480px) {
   .container {
     padding: 1.5rem 0.75rem;

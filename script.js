@@ -65,6 +65,7 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let focusedCellIndex = 0;
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -127,22 +128,61 @@ function updateScoreDisplay() {
 }
 updateScoreDisplay();
 
-const winPatterns = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8],
-  [0, 3, 6], [1, 4, 7], [2, 5, 8],
-  [0, 4, 8], [2, 4, 6]
-];
+function getCellLabel(row, col, value) {
+  const content = value === '' ? 'empty' : value;
+  return `Row ${row}, Column ${col}, ${content}`;
+}
 
-function handleCellClick(e) {
-  const cell = e.target;
+function updateCellAriaLabels() {
+  cells.forEach((cell, index) => {
+    const row = Math.floor(index / 3) + 1;
+    const col = (index % 3) + 1;
+    const value = gameState[index] || '';
+    cell.setAttribute('aria-label', getCellLabel(row, col, value));
+  });
+}
+
+function setRovingTabindex(index) {
+  cells.forEach((cell, i) => {
+    cell.setAttribute('tabindex', i === index ? '0' : '-1');
+  });
+  focusedCellIndex = index;
+}
+
+function focusCell(index) {
+  if (index < 0 || index >= cells.length) return;
+  setRovingTabindex(index);
+  cells[index].focus();
+}
+
+function moveFocus(direction) {
+  const row = Math.floor(focusedCellIndex / 3);
+  const col = focusedCellIndex % 3;
+  let nextRow = row;
+  let nextCol = col;
+
+  switch (direction) {
+    case 'up': nextRow = Math.max(0, row - 1); break;
+    case 'down': nextRow = Math.min(2, row + 1); break;
+    case 'left': nextCol = Math.max(0, col - 1); break;
+    case 'right': nextCol = Math.min(2, col + 1); break;
+  }
+
+  const nextIndex = nextRow * 3 + nextCol;
+  if (nextIndex !== focusedCellIndex) {
+    focusCell(nextIndex);
+  }
+}
+
+function handleCellAction(cell) {
   const index = cell.dataset.index;
-
   if (!gameActive || gameState[index] !== '') return;
 
   gameState[index] = currentPlayer;
   cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
   cell.classList.add(currentPlayer.toLowerCase());
   setNamesDisabled(true);
+  updateCellAriaLabels();
 
   audio.playMove();
 
@@ -151,6 +191,34 @@ function handleCellClick(e) {
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+}
+
+function handleCellKeydown(e) {
+  const key = e.key;
+
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+    e.preventDefault();
+    const direction = key.replace('Arrow', '').toLowerCase();
+    moveFocus(direction);
+    return;
+  }
+
+  if (key === 'Enter' || key === ' ') {
+    e.preventDefault();
+    handleCellAction(e.currentTarget);
+  }
+}
+
+updateCellAriaLabels();
+
+const winPatterns = [
+  [0, 1, 2], [3, 4, 5], [6, 7, 8],
+  [0, 3, 6], [1, 4, 7], [2, 5, 8],
+  [0, 4, 8], [2, 4, 6]
+];
+
+function handleCellClick(e) {
+  handleCellAction(e.currentTarget);
 }
 
 function getCellCenter(index) {
@@ -242,6 +310,8 @@ function resetGame() {
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updateCellAriaLabels();
+  setRovingTabindex(0);
   triggerBoardEnter();
 }
 
@@ -325,7 +395,11 @@ function toggleMute() {
   audio.muted = !audio.muted;
 }
 
-cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+cells.forEach((cell, index) => {
+  cell.addEventListener('focus', () => setRovingTabindex(index));
+  cell.addEventListener('click', handleCellClick);
+  cell.addEventListener('keydown', handleCellKeydown);
+});
 resetBtn.addEventListener('click', resetGame);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
