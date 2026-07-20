@@ -10,6 +10,11 @@ const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistory');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsPanel = document.getElementById('settingsPanel');
+const timerEnabledInput = document.getElementById('timerEnabled');
+const timerDurationInput = document.getElementById('timerDuration');
+const turnIndicator = document.getElementById('turnIndicator');
 
 const audio = {
   ctx: null,
@@ -58,8 +63,10 @@ const audio = {
   },
 };
 
-const SVG_X = '<svg class="symbol" viewBox="0 0 100 100"><line class="x-line" x1="20" y1="20" x2="80" y2="80"/><line class="x-line" x1="80" y1="20" x2="20" y2="80"/></svg>';
-const SVG_O = '<svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle" cx="50" cy="50" r="30"/></svg>';
+const TOKEN_X = '<line class="x-line" x1="20" y1="20" x2="80" y2="80"/><line class="x-line" x1="80" y1="20" x2="20" y2="80"/>';
+const TOKEN_O = '<circle class="o-circle" cx="50" cy="50" r="30"/>';
+const SVG_X = `<svg class="symbol" viewBox="0 0 100 100">${TOKEN_X}</svg>`;
+const SVG_O = `<svg class="symbol" viewBox="0 0 100 100">${TOKEN_O}</svg>`;
 
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
@@ -112,6 +119,7 @@ nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
 function updateStatus() {
   if (!gameActive) return;
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  renderTurnIndicator();
 }
 
 function setNamesDisabled(disabled) {
@@ -149,8 +157,11 @@ function handleCellClick(e) {
   if (checkWin()) return;
   if (checkDraw()) return;
 
+  timerConsecutiveTimeouts[currentPlayer] = 0;
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  timerConsecutiveTimeouts[currentPlayer] = 0;
+  updateStatus();
+  startTimer();
 }
 
 function getCellCenter(index) {
@@ -199,6 +210,8 @@ function checkWin() {
     const [a, b, c] = pattern;
     if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
       gameActive = false;
+      stopTimer();
+      renderTurnIndicator();
       cells[a].classList.add('win');
       cells[b].classList.add('win');
       cells[c].classList.add('win');
@@ -221,6 +234,8 @@ function checkWin() {
 function checkDraw() {
   if (gameState.every(cell => cell !== '')) {
     gameActive = false;
+    stopTimer();
+    renderTurnIndicator();
     audio.playDraw();
     status.textContent = "It's a draw!";
     saveGameHistory('Draw');
@@ -233,6 +248,7 @@ function resetGame() {
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
+  timerConsecutiveTimeouts = { X: 0, O: 0 };
   status.textContent = `${getPlayerName('X')}'s turn`;
   setNamesDisabled(false);
   cells.forEach(cell => {
@@ -243,6 +259,8 @@ function resetGame() {
   winAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   triggerBoardEnter();
+  updateStatus();
+  startTimer();
 }
 
 function triggerBoardEnter() {
@@ -305,6 +323,139 @@ function clearHistory() {
   renderHistory();
 }
 
+const TIMER_CIRCUMFERENCE = 2 * Math.PI * 46;
+
+let timerEnabled = localStorage.getItem('timerEnabled') === 'true';
+let timerDuration = parseInt(localStorage.getItem('timerDuration') || '10', 10);
+let timerRemaining = 0;
+let timerInterval = null;
+let timerPaused = false;
+let timerConsecutiveTimeouts = { X: 0, O: 0 };
+
+function saveTimerSettings() {
+  localStorage.setItem('timerEnabled', timerEnabled);
+  localStorage.setItem('timerDuration', timerDuration);
+}
+
+function renderSettings() {
+  timerEnabledInput.checked = timerEnabled;
+  timerDurationInput.value = String(timerDuration);
+}
+
+function toggleSettingsPanel() {
+  const isHidden = settingsPanel.hasAttribute('hidden');
+  if (isHidden) {
+    settingsPanel.removeAttribute('hidden');
+    settingsToggle.setAttribute('aria-expanded', 'true');
+  } else {
+    settingsPanel.setAttribute('hidden', '');
+    settingsToggle.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function closeSettingsPanelOnOutsideClick(e) {
+  if (!settingsPanel.contains(e.target) && !settingsToggle.contains(e.target)) {
+    settingsPanel.setAttribute('hidden', '');
+    settingsToggle.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function renderTurnIndicator() {
+  if (!gameActive) {
+    turnIndicator.innerHTML = '';
+    return;
+  }
+  const color = currentPlayer === 'X' ? 'var(--color-x)' : 'var(--color-o)';
+  const token = currentPlayer === 'X' ? TOKEN_X : TOKEN_O;
+  const showRing = timerEnabled && !isCpuTurn();
+  turnIndicator.innerHTML = `
+    <svg class="turn-indicator__svg ${showRing ? '' : 'turn-indicator__svg--no-timer'}" viewBox="0 0 100 100" style="--turn-color: ${color};">
+      <circle class="timer-ring-track" cx="50" cy="50" r="46" />
+      <circle class="timer-ring-progress" cx="50" cy="50" r="46" style="--timer-progress: 1; --timer-circumference: ${TIMER_CIRCUMFERENCE.toFixed(2)};" />
+      <g class="turn-indicator__token">${token}</g>
+    </svg>
+  `;
+}
+
+function isCpuTurn() {
+  // Hook for issue #32: CPU mode can set window.cpuMode and window.cpuPlayer.
+  return typeof window.cpuMode !== 'undefined' && window.cpuMode && currentPlayer === window.cpuPlayer;
+}
+
+function updateTimerVisual() {
+  const ring = turnIndicator.querySelector('.timer-ring-progress');
+  if (!ring) return;
+  const progress = timerDuration > 0 ? timerRemaining / timerDuration : 0;
+  ring.style.setProperty('--timer-progress', progress.toFixed(3));
+  ring.classList.toggle('timer-ring--warning', timerRemaining <= 5 && timerRemaining > 3);
+  ring.classList.toggle('timer-ring--danger', timerRemaining <= 3);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function pauseTimer() {
+  timerPaused = true;
+  const ring = turnIndicator.querySelector('.timer-ring-progress');
+  if (ring) ring.classList.add('timer-ring--paused');
+}
+
+function resumeTimer() {
+  timerPaused = false;
+  const ring = turnIndicator.querySelector('.timer-ring-progress');
+  if (ring) ring.classList.remove('timer-ring--paused');
+}
+
+function handleTimeout() {
+  stopTimer();
+  const player = currentPlayer;
+  timerConsecutiveTimeouts[player]++;
+
+  if (timerConsecutiveTimeouts[player] >= 3) {
+    const opponent = player === 'X' ? 'O' : 'X';
+    gameActive = false;
+    status.textContent = `${getPlayerName(player)} timed out 3 times — ${getPlayerName(opponent)} wins!`;
+    if (opponent === 'X') scoreX++; else scoreO++;
+    localStorage.setItem('scoreX', scoreX);
+    localStorage.setItem('scoreO', scoreO);
+    updateScoreDisplay();
+    saveGameHistory(opponent);
+    renderTurnIndicator();
+    return;
+  }
+
+  currentPlayer = player === 'X' ? 'O' : 'X';
+  status.textContent = `${getPlayerName(player)} ran out of time — ${getPlayerName(currentPlayer)}'s turn`;
+  renderTurnIndicator();
+  startTimer();
+}
+
+function tickTimer() {
+  if (!gameActive || !timerEnabled || timerPaused || isCpuTurn()) return;
+  timerRemaining -= 0.1;
+  if (timerRemaining <= 0) {
+    timerRemaining = 0;
+    updateTimerVisual();
+    handleTimeout();
+  } else {
+    updateTimerVisual();
+  }
+}
+
+function startTimer() {
+  stopTimer();
+  timerRemaining = timerDuration;
+  timerPaused = false;
+  renderTurnIndicator();
+  if (!gameActive || !timerEnabled || isCpuTurn()) return;
+  updateTimerVisual();
+  timerInterval = setInterval(tickTimer, 100);
+}
+
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   themeToggle.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}\u{FE0F}';
@@ -331,6 +482,31 @@ resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
+settingsToggle.addEventListener('click', toggleSettingsPanel);
+document.addEventListener('click', closeSettingsPanelOnOutsideClick);
+
+timerEnabledInput.addEventListener('change', () => {
+  timerEnabled = timerEnabledInput.checked;
+  saveTimerSettings();
+  startTimer();
+});
+
+timerDurationInput.addEventListener('change', () => {
+  timerDuration = parseInt(timerDurationInput.value, 10);
+  saveTimerSettings();
+  startTimer();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    pauseTimer();
+  } else {
+    resumeTimer();
+  }
+});
 
 triggerBoardEnter();
 renderHistory();
+renderSettings();
+updateStatus();
+startTimer();
