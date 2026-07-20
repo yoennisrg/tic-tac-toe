@@ -43,14 +43,65 @@
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg);
-  background-image: radial-gradient(ellipse at 20% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
-                    radial-gradient(ellipse at 80% 50%, rgba(251, 113, 133, 0.06) 0%, transparent 50%);
   color: var(--text);
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   transition: background 0.3s, color 0.3s;
+}
+
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  will-change: transform;
+}
+
+.blob-1 {
+  width: 65vmax;
+  height: 65vmax;
+  top: -15%;
+  left: -15%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, transparent 65%);
+  animation: drift-1 38s ease-in-out infinite alternate;
+}
+
+.blob-2 {
+  width: 60vmax;
+  height: 60vmax;
+  bottom: -20%;
+  right: -15%;
+  background: radial-gradient(circle, rgba(251, 113, 133, 0.45) 0%, transparent 65%);
+  animation: drift-2 48s ease-in-out infinite alternate;
+}
+
+.blob-3 {
+  width: 55vmax;
+  height: 55vmax;
+  top: 35%;
+  left: 30%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, transparent 65%);
+  animation: drift-3 30s ease-in-out infinite alternate;
+}
+
+[data-theme="light"] .ambient-bg {
+  background-image: radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.06) 1px, transparent 0);
+  background-size: 28px 28px;
+  animation: dot-breathe 32s ease-in-out infinite alternate;
+}
+
+[data-theme="light"] .blob {
+  display: none;
 }
 
 .container {
@@ -337,6 +388,26 @@ h1 {
   transform: scale(1.1);
 }
 
+@keyframes drift-1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(14%, 10%) scale(1.06); }
+}
+
+@keyframes drift-2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-12%, -14%) scale(1.04); }
+}
+
+@keyframes drift-3 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(10%, -12%) scale(1.08); }
+}
+
+@keyframes dot-breathe {
+  0% { opacity: 0.35; }
+  100% { opacity: 0.65; }
+}
+
 @keyframes cell-enter {
   from {
     opacity: 0;
@@ -361,5 +432,12 @@ h1 {
   .reset:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blob,
+  [data-theme="light"] .ambient-bg {
+    animation: none;
   }
 }
