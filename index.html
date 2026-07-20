@@ -21,6 +21,14 @@
       <span class="vs">vs</span>
       <input type="text" id="nameO" value="Player O" maxlength="20" spellcheck="false">
     </div>
+    <div class="turn-indicator" id="turnIndicator">
+      <div class="player-token token-x active" data-player="X" aria-label="Player X token">
+        <svg class="symbol" viewBox="0 0 100 100"><line class="x-line" x1="20" y1="20" x2="80" y2="80"/><line class="x-line" x1="80" y1="20" x2="20" y2="80"/></svg>
+      </div>
+      <div class="player-token token-o" data-player="O" aria-label="Player O token">
+        <svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle" cx="50" cy="50" r="30"/></svg>
+      </div>
+    </div>
     <div class="status" id="status">Player X's turn</div>
     <div class="board" id="board">
       <div class="cell" data-index="0"></div>
