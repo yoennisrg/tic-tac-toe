@@ -1,6 +1,11 @@
 const board = document.getElementById('board');
 const cells = document.querySelectorAll('.cell');
 const status = document.getElementById('status');
+const turnIndicator = document.getElementById('turnIndicator');
+const tokens = {
+  X: turnIndicator.querySelector('[data-player="X"]'),
+  O: turnIndicator.querySelector('[data-player="O"]'),
+};
 const resetBtn = document.getElementById('reset');
 const resetScoreBtn = document.getElementById('resetScore');
 const scoreDisplay = document.getElementById('score');
@@ -109,9 +114,23 @@ function onNameInput(player, input) {
 nameXInput.addEventListener('input', () => onNameInput('X', nameXInput));
 nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
 
+function updateTurnIndicator() {
+  tokens.X.classList.remove('active', 'winner', 'frozen');
+  tokens.O.classList.remove('active', 'winner', 'frozen');
+
+  if (!gameActive) {
+    tokens.X.classList.add('frozen');
+    tokens.O.classList.add('frozen');
+    return;
+  }
+
+  tokens[currentPlayer].classList.add('active');
+}
+
 function updateStatus() {
   if (!gameActive) return;
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  updateTurnIndicator();
 }
 
 function setNamesDisabled(disabled) {
@@ -150,7 +169,7 @@ function handleCellClick(e) {
   if (checkDraw()) return;
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  updateStatus();
 }
 
 function getCellCenter(index) {
@@ -204,6 +223,8 @@ function checkWin() {
       cells[c].classList.add('win');
       audio.playWin();
       status.textContent = `${getPlayerName(currentPlayer)} wins!`;
+      updateTurnIndicator();
+      tokens[currentPlayer].classList.add('winner');
       if (currentPlayer === 'X') scoreX++; else scoreO++;
       localStorage.setItem('scoreX', scoreX);
       localStorage.setItem('scoreO', scoreO);
@@ -223,6 +244,7 @@ function checkDraw() {
     gameActive = false;
     audio.playDraw();
     status.textContent = "It's a draw!";
+    updateTurnIndicator();
     saveGameHistory('Draw');
     return true;
   }
@@ -234,6 +256,7 @@ function resetGame() {
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
   status.textContent = `${getPlayerName('X')}'s turn`;
+  updateTurnIndicator();
   setNamesDisabled(false);
   cells.forEach(cell => {
     cell.textContent = '';
@@ -332,5 +355,6 @@ themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
 
+updateStatus();
 triggerBoardEnter();
 renderHistory();
