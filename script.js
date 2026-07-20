@@ -99,6 +99,7 @@ function getPlayerName(player) {
 
 nameXInput.value = loadName('X');
 nameOInput.value = loadName('O');
+updateStatus();
 
 function onNameInput(player, input) {
   saveName(player, input.value);
@@ -120,10 +121,7 @@ function setNamesDisabled(disabled) {
 }
 
 function updateScoreDisplay() {
-  scoreDisplay.innerHTML = `
-    <span class="score-badge score-badge--x">${getPlayerName('X')}: ${scoreX}</span>
-    <span class="score-badge score-badge--o">${getPlayerName('O')}: ${scoreO}</span>
-  `;
+  scoreDisplay.textContent = `${getPlayerName('X')}: ${scoreX} | ${getPlayerName('O')}: ${scoreO}`;
 }
 updateScoreDisplay();
 
