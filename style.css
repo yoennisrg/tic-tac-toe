@@ -113,6 +113,72 @@ h1 {
   font-weight: 600;
 }
 
+.settings {
+  background: var(--cell-bg);
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  transition: background 0.3s;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.setting-row:last-child {
+  margin-bottom: 0;
+}
+
+.setting-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #888;
+  min-width: 4rem;
+  text-align: left;
+}
+
+.mode-selector,
+.difficulty-selector,
+.size-selector {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mode-btn,
+.diff-btn,
+.size-btn {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 2px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.3s, border-color 0.3s, transform 0.2s;
+}
+
+.mode-btn:hover,
+.diff-btn:hover,
+.size-btn:hover {
+  transform: translateY(-1px);
+}
+
+.mode-btn.active,
+.diff-btn.active,
+.size-btn.active {
+  background: linear-gradient(135deg, var(--btn-bg-start), var(--btn-bg-end));
+  border-color: transparent;
+  color: #fff;
+}
+
 .status {
   font-size: 1.25rem;
   margin-bottom: 1.5rem;
@@ -121,11 +187,12 @@ h1 {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(3, min(26vw, 110px));
-  grid-template-rows: repeat(3, min(26vw, 110px));
+  grid-template-columns: repeat(var(--board-size, 3), var(--cell-size, min(26vw, 110px)));
+  grid-template-rows: repeat(var(--board-size, 3), var(--cell-size, min(26vw, 110px)));
   gap: 6px;
   margin-bottom: 1.5rem;
   position: relative;
+  justify-content: center;
 }
 
 #winCanvas {
@@ -154,6 +221,16 @@ h1 {
 
 .cell:hover {
   background: var(--cell-hover);
+}
+
+.board.thinking .cell {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.board.thinking .cell:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 @media (max-width: 480px) {
