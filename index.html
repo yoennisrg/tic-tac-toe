@@ -16,6 +16,31 @@
   </div>
   <div class="container">
     <h1>Tic-Tac-Toe</h1>
+    <div class="settings">
+      <div class="setting-row">
+        <span class="setting-label">Mode</span>
+        <div class="mode-selector">
+          <button class="mode-btn active" data-mode="pvp">2 Players</button>
+          <button class="mode-btn" data-mode="cpu">vs CPU</button>
+        </div>
+      </div>
+      <div class="setting-row" id="difficultySelector" style="display:none">
+        <span class="setting-label">Difficulty</span>
+        <div class="difficulty-selector">
+          <button class="diff-btn" data-diff="easy">Easy</button>
+          <button class="diff-btn active" data-diff="medium">Medium</button>
+          <button class="diff-btn" data-diff="hard">Hard</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Board</span>
+        <div class="size-selector">
+          <button class="size-btn" data-size="3">3×3</button>
+          <button class="size-btn" data-size="4">4×4</button>
+          <button class="size-btn" data-size="5">5×5</button>
+        </div>
+      </div>
+    </div>
     <div class="names">
       <input type="text" id="nameX" value="Player X" maxlength="20" spellcheck="false">
       <span class="vs">vs</span>
@@ -23,15 +48,6 @@
     </div>
     <div class="status" id="status">Player X's turn</div>
     <div class="board" id="board">
-      <div class="cell" data-index="0"></div>
-      <div class="cell" data-index="1"></div>
-      <div class="cell" data-index="2"></div>
-      <div class="cell" data-index="3"></div>
-      <div class="cell" data-index="4"></div>
-      <div class="cell" data-index="5"></div>
-      <div class="cell" data-index="6"></div>
-      <div class="cell" data-index="7"></div>
-      <div class="cell" data-index="8"></div>
       <canvas id="winCanvas"></canvas>
     </div>
     <div class="score" id="score">X: 0 | O: 0</div>
