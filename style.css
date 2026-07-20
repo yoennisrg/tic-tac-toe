@@ -246,23 +246,31 @@ h1 {
 .history {
   margin-top: 1.5rem;
   text-align: left;
-  max-width: 324px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 8px 32px var(--glass-shadow);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .history-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .history-header h2 {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .clear-history {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   padding: 0.3rem 0.8rem;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--btn-reset-bg-start), var(--btn-reset-bg-end));
@@ -282,29 +290,93 @@ h1 {
 
 .history-list {
   background: var(--cell-bg);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 0.5rem;
   min-height: 2rem;
+  max-height: 360px;
+  overflow-y: auto;
   transition: background 0.3s;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+}
+
+.history-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .history-entry {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.85rem;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
-  display: flex;
-  justify-content: space-between;
+  padding: 0.55rem 0.6rem;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.history-entry:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .history-entry:last-child {
   border-bottom: none;
 }
 
+.history-icon {
+  font-size: 1rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.history-result {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-time {
+  font-size: 0.75rem;
+  color: #888;
+  white-space: nowrap;
+}
+
 .history-empty {
   text-align: center;
   color: #888;
   font-size: 0.85rem;
-  padding: 0.5rem;
+  padding: 0.75rem;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.history-entry--new {
+  animation: slideIn 0.4s ease-out forwards;
 }
 
 .top-buttons {
