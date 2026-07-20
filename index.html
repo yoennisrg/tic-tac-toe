@@ -21,22 +21,43 @@
       <span class="vs">vs</span>
       <input type="text" id="nameO" value="Player O" maxlength="20" spellcheck="false">
     </div>
-    <div class="status" id="status">Player X's turn</div>
-    <div class="board" id="board">
-      <div class="cell" data-index="0"></div>
-      <div class="cell" data-index="1"></div>
-      <div class="cell" data-index="2"></div>
-      <div class="cell" data-index="3"></div>
-      <div class="cell" data-index="4"></div>
-      <div class="cell" data-index="5"></div>
-      <div class="cell" data-index="6"></div>
-      <div class="cell" data-index="7"></div>
-      <div class="cell" data-index="8"></div>
-      <canvas id="winCanvas"></canvas>
+
+    <div class="start-screen" id="startScreen">
+      <p class="start-label">Choose game mode</p>
+      <div class="mode-row" role="group" aria-label="Game mode">
+        <button class="mode-btn selected" data-mode="2p" aria-pressed="true">2 Players</button>
+        <button class="mode-btn" data-mode="cpu" aria-pressed="false">vs CPU</button>
+      </div>
+      <div class="difficulty-row hidden" id="difficultyRow">
+        <label for="difficulty">Difficulty</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <button class="reset" id="startGame">Start Game</button>
     </div>
+
+    <div class="game-area hidden" id="gameArea">
+      <div class="status" id="status">Player X's turn</div>
+      <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+        <canvas id="winCanvas"></canvas>
+      </div>
+      <button class="reset" id="reset">New Game</button>
+      <button class="reset reset-score" id="resetScore">Reset Score</button>
+    </div>
+
     <div class="score" id="score">X: 0 | O: 0</div>
-    <button class="reset" id="reset">New Game</button>
-    <button class="reset reset-score" id="resetScore">Reset Score</button>
     <div class="history" id="history">
       <div class="history-header">
         <h2>Game History</h2>

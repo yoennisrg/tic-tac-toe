@@ -10,6 +10,12 @@ const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistory');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
+const startScreen = document.getElementById('startScreen');
+const gameArea = document.getElementById('gameArea');
+const startGameBtn = document.getElementById('startGame');
+const modeBtns = document.querySelectorAll('.mode-btn');
+const difficultyRow = document.getElementById('difficultyRow');
+const difficultySelect = document.getElementById('difficulty');
 
 const audio = {
   ctx: null,
@@ -63,8 +69,12 @@ const SVG_O = '<svg class="symbol" viewBox="0 0 100 100"><circle class="o-circle
 
 let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
-let gameActive = true;
+let gameActive = false;
 let winAnimId = null;
+let cpuThinking = false;
+let cpuMoveTimeout = null;
+let gameMode = localStorage.getItem('gameMode') || '2p';
+let difficulty = localStorage.getItem('difficulty') || 'hard';
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
@@ -72,6 +82,7 @@ function resizeCanvas() {
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
+
 let scoreX = parseInt(localStorage.getItem('scoreX') || '0');
 let scoreO = parseInt(localStorage.getItem('scoreO') || '0');
 let roundNumber = parseInt(localStorage.getItem('roundNumber') || '0');
@@ -92,13 +103,17 @@ function saveName(player, value) {
   localStorage.setItem('name' + player, trimmed || '');
 }
 
+function isCpuMode() {
+  return gameMode === 'cpu';
+}
+
 function getPlayerName(player) {
+  if (isCpuMode() && player === 'O') return 'CPU';
   const saved = localStorage.getItem('name' + player);
   return saved && saved.trim() ? saved.trim() : getDefaultName(player);
 }
 
 nameXInput.value = loadName('X');
-nameOInput.value = loadName('O');
 
 function onNameInput(player, input) {
   saveName(player, input.value);
@@ -110,13 +125,17 @@ nameXInput.addEventListener('input', () => onNameInput('X', nameXInput));
 nameOInput.addEventListener('input', () => onNameInput('O', nameOInput));
 
 function updateStatus() {
+  if (cpuThinking) {
+    status.textContent = "CPU is thinking...";
+    return;
+  }
   if (!gameActive) return;
   status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
 }
 
 function setNamesDisabled(disabled) {
   nameXInput.disabled = disabled;
-  nameOInput.disabled = disabled;
+  nameOInput.disabled = disabled || isCpuMode();
 }
 
 function updateScoreDisplay() {
@@ -133,15 +152,98 @@ const winPatterns = [
   [0, 4, 8], [2, 4, 6]
 ];
 
-function handleCellClick(e) {
-  const cell = e.target;
-  const index = cell.dataset.index;
+function evaluate(state, depth) {
+  for (const [a, b, c] of winPatterns) {
+    if (state[a] && state[a] === state[b] && state[a] === state[c]) {
+      return state[a] === 'O' ? 10 - depth : -10 + depth;
+    }
+  }
+  return 0;
+}
 
-  if (!gameActive || gameState[index] !== '') return;
+function minimax(state, depth, alpha, beta, isMaximizing, maxDepth) {
+  const score = evaluate(state, depth);
+  if (score !== 0) return score;
+  if (state.every(cell => cell !== '') || depth === maxDepth) return 0;
 
-  gameState[index] = currentPlayer;
-  cell.innerHTML = currentPlayer === 'X' ? SVG_X : SVG_O;
-  cell.classList.add(currentPlayer.toLowerCase());
+  if (isMaximizing) {
+    let best = -Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (state[i] === '') {
+        state[i] = 'O';
+        best = Math.max(best, minimax(state, depth + 1, alpha, beta, false, maxDepth));
+        state[i] = '';
+        alpha = Math.max(alpha, best);
+        if (beta <= alpha) break;
+      }
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (state[i] === '') {
+        state[i] = 'X';
+        best = Math.min(best, minimax(state, depth + 1, alpha, beta, true, maxDepth));
+        state[i] = '';
+        beta = Math.min(beta, best);
+        if (beta <= alpha) break;
+      }
+    }
+    return best;
+  }
+}
+
+function getBestMove(maxDepth) {
+  let bestScore = -Infinity;
+  const bestMoves = [];
+  for (let i = 0; i < 9; i++) {
+    if (gameState[i] === '') {
+      gameState[i] = 'O';
+      const score = minimax(gameState, 0, -Infinity, Infinity, false, maxDepth);
+      gameState[i] = '';
+      if (score > bestScore) {
+        bestScore = score;
+        bestMoves.length = 0;
+        bestMoves.push(i);
+      } else if (score === bestScore) {
+        bestMoves.push(i);
+      }
+    }
+  }
+  return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+}
+
+function getCpuMove() {
+  if (difficulty === 'easy') {
+    const empty = gameState.map((v, i) => v === '' ? i : null).filter(i => i !== null);
+    return empty[Math.floor(Math.random() * empty.length)];
+  }
+  const maxDepth = difficulty === 'medium' ? 3 : Infinity;
+  return getBestMove(maxDepth);
+}
+
+function cpuMove() {
+  if (!gameActive || !isCpuMode() || currentPlayer !== 'O') return;
+
+  cpuThinking = true;
+  board.classList.add('cpu-thinking');
+  updateStatus();
+
+  const moveIndex = getCpuMove();
+
+  cpuMoveTimeout = setTimeout(() => {
+    cpuMoveTimeout = null;
+    makeMove(moveIndex, 'O');
+    board.classList.remove('cpu-thinking');
+    cpuThinking = false;
+  }, 400);
+}
+
+function makeMove(index, player) {
+  gameState[index] = player;
+  const cell = cells[index];
+  cell.innerHTML = player === 'X' ? SVG_X : SVG_O;
+  cell.classList.add(player.toLowerCase());
   setNamesDisabled(true);
 
   audio.playMove();
@@ -150,7 +252,20 @@ function handleCellClick(e) {
   if (checkDraw()) return;
 
   currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-  status.textContent = `${getPlayerName(currentPlayer)}'s turn`;
+  updateStatus();
+}
+
+function handleCellClick(e) {
+  const cell = e.target;
+  const index = cell.dataset.index;
+
+  if (cpuThinking || !gameActive || gameState[index] !== '') return;
+
+  makeMove(index, currentPlayer);
+
+  if (gameActive && isCpuMode() && currentPlayer === 'O') {
+    cpuMove();
+  }
 }
 
 function getCellCenter(index) {
@@ -230,11 +345,17 @@ function checkDraw() {
 }
 
 function resetGame() {
+  if (cpuMoveTimeout) {
+    clearTimeout(cpuMoveTimeout);
+    cpuMoveTimeout = null;
+  }
+  cpuThinking = false;
+  board.classList.remove('cpu-thinking');
   currentPlayer = 'X';
   gameState = ['', '', '', '', '', '', '', '', ''];
   gameActive = true;
   status.textContent = `${getPlayerName('X')}'s turn`;
-  setNamesDisabled(false);
+  setNamesDisabled(true);
   cells.forEach(cell => {
     cell.textContent = '';
     cell.classList.remove('x', 'o', 'win');
@@ -325,12 +446,83 @@ function toggleMute() {
   audio.muted = !audio.muted;
 }
 
+function updateModeUI() {
+  modeBtns.forEach(btn => {
+    const selected = btn.dataset.mode === gameMode;
+    btn.classList.toggle('selected', selected);
+    btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  });
+
+  if (isCpuMode()) {
+    difficultyRow.classList.remove('hidden');
+    nameOInput.value = 'CPU';
+    difficultySelect.value = difficulty;
+  } else {
+    difficultyRow.classList.add('hidden');
+    nameOInput.value = loadName('O');
+  }
+
+  setNamesDisabled(false);
+  updateScoreDisplay();
+}
+
+function setGameMode(mode) {
+  gameMode = mode;
+  localStorage.setItem('gameMode', mode);
+  updateModeUI();
+}
+
+function setDifficulty(value) {
+  difficulty = value;
+  localStorage.setItem('difficulty', value);
+}
+
+function showStartScreen() {
+  if (cpuMoveTimeout) {
+    clearTimeout(cpuMoveTimeout);
+    cpuMoveTimeout = null;
+  }
+  cpuThinking = false;
+  board.classList.remove('cpu-thinking');
+  gameActive = false;
+
+  startScreen.classList.remove('hidden');
+  gameArea.classList.add('hidden');
+
+  currentPlayer = 'X';
+  gameState = ['', '', '', '', '', '', '', '', ''];
+  cells.forEach(cell => {
+    cell.textContent = '';
+    cell.classList.remove('x', 'o', 'win');
+  });
+  if (winAnimId) cancelAnimationFrame(winAnimId);
+  winAnimId = null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  updateModeUI();
+}
+
+function startGame() {
+  startScreen.classList.add('hidden');
+  gameArea.classList.remove('hidden');
+  resizeCanvas();
+  resetGame();
+}
+
+modeBtns.forEach(btn => {
+  btn.addEventListener('click', () => setGameMode(btn.dataset.mode));
+});
+
+difficultySelect.addEventListener('change', () => setDifficulty(difficultySelect.value));
+
+startGameBtn.addEventListener('click', startGame);
 cells.forEach(cell => cell.addEventListener('click', handleCellClick));
-resetBtn.addEventListener('click', resetGame);
+resetBtn.addEventListener('click', showStartScreen);
 resetScoreBtn.addEventListener('click', resetScore);
 themeToggle.addEventListener('click', toggleTheme);
 muteToggle.addEventListener('click', toggleMute);
 clearHistoryBtn.addEventListener('click', clearHistory);
 
-triggerBoardEnter();
+updateModeUI();
 renderHistory();
+showStartScreen();
