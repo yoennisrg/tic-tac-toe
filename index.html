@@ -12,7 +12,22 @@
 <body>
   <div class="top-buttons">
     <button class="top-btn mute-toggle" id="muteToggle" aria-label="Toggle sound">🔊</button>
+    <button class="top-btn settings-toggle" id="settingsToggle" aria-label="Settings" aria-expanded="false" aria-controls="settingsPanel">⚙️</button>
     <button class="top-btn theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
+  </div>
+  <div class="settings-panel" id="settingsPanel" hidden>
+    <div class="settings-row">
+      <label for="timerEnabled">Turn timer</label>
+      <input type="checkbox" id="timerEnabled">
+    </div>
+    <div class="settings-row">
+      <label for="timerDuration">Turn duration</label>
+      <select id="timerDuration">
+        <option value="5">5s</option>
+        <option value="10" selected>10s</option>
+        <option value="15">15s</option>
+      </select>
+    </div>
   </div>
   <div class="container">
     <h1>Tic-Tac-Toe</h1>
@@ -22,6 +37,7 @@
       <input type="text" id="nameO" value="Player O" maxlength="20" spellcheck="false">
     </div>
     <div class="status" id="status">Player X's turn</div>
+    <div class="turn-indicator" id="turnIndicator" aria-hidden="true"></div>
     <div class="board" id="board">
       <div class="cell" data-index="0"></div>
       <div class="cell" data-index="1"></div>
