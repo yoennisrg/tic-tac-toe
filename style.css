@@ -12,8 +12,8 @@
   --glass-bg: rgba(255, 255, 255, 0.04);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-shadow: rgba(0, 0, 0, 0.4);
-  --color-x: #38bdf8;
-  --color-o: #fb7185;
+  --color-x: #00d4ff;
+  --color-o: #ff6b6b;
 }
 
 [data-theme="light"] {
@@ -30,8 +30,8 @@
   --glass-bg: rgba(255, 255, 255, 0.6);
   --glass-border: rgba(255, 255, 255, 0.8);
   --glass-shadow: rgba(0, 0, 0, 0.08);
-  --color-x: #0284c7;
-  --color-o: #e11d48;
+  --color-x: #00d4ff;
+  --color-o: #ff6b6b;
 }
 
 * {
@@ -144,8 +144,6 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 2.5rem;
-  font-weight: bold;
   cursor: pointer;
   transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
   user-select: none;
