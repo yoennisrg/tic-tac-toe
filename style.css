@@ -121,10 +121,11 @@ h1 {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(3, min(26vw, 110px));
-  grid-template-rows: repeat(3, min(26vw, 110px));
+  grid-template-columns: repeat(3, min(28vmin, 110px));
+  grid-template-rows: repeat(3, min(28vmin, 110px));
   gap: 6px;
-  margin-bottom: 1.5rem;
+  margin: 0 auto 1.5rem;
+  width: fit-content;
   position: relative;
 }
 
@@ -150,6 +151,8 @@ h1 {
   transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
   user-select: none;
   touch-action: manipulation;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .cell:hover {
@@ -160,6 +163,36 @@ h1 {
   .container {
     padding: 1.5rem 0.75rem;
     border-radius: 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .container {
+    padding-top: 3rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .top-buttons {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+
+  .top-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .names {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .names input {
+    width: 100%;
   }
 }
 
@@ -227,6 +260,7 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
+  touch-action: manipulation;
 }
 
 .reset:hover {
@@ -246,7 +280,7 @@ h1 {
 .history {
   margin-top: 1.5rem;
   text-align: left;
-  max-width: 324px;
+  max-width: min(324px, 100%);
 }
 
 .history-header {
@@ -273,6 +307,7 @@ h1 {
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: opacity 0.3s, transform 0.2s;
+  touch-action: manipulation;
 }
 
 .clear-history:hover {
@@ -294,6 +329,8 @@ h1 {
   border-bottom: 1px solid rgba(128, 128, 128, 0.2);
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .history-entry:last-child {
@@ -331,6 +368,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
 }
 
 .top-btn:hover {
