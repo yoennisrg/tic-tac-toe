@@ -21,8 +21,12 @@ const audio = {
     muteToggle.textContent = v ? '\u{1F507}' : '\u{1F50A}';
   },
   init() {
-    if (this.ctx) return;
-    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
   },
   playTone(freq, duration, startTime) {
     const osc = this.ctx.createOscillator();
