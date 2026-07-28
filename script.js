@@ -10,6 +10,8 @@ const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistory');
 const canvas = document.getElementById('winCanvas');
 const ctx = canvas.getContext('2d');
+const confettiCanvas = document.getElementById('confettiCanvas');
+const confettiCtx = confettiCanvas.getContext('2d');
 
 const audio = {
   ctx: null,
@@ -65,10 +67,13 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let confettiAnimId = null;
 
 function resizeCanvas() {
   canvas.width = board.offsetWidth;
   canvas.height = board.offsetHeight;
+  confettiCanvas.width = board.offsetWidth;
+  confettiCanvas.height = board.offsetHeight;
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -194,6 +199,79 @@ function drawWinLine(pattern, color) {
   winAnimId = requestAnimationFrame(animate);
 }
 
+function getConfettiColors(winner) {
+  const style = getComputedStyle(document.documentElement);
+  const base = style.getPropertyValue(winner === 'X' ? '--color-x' : '--color-o').trim();
+  return winner === 'X'
+    ? [base, base, '#22d3ee', '#60a5fa', '#93c5fd', '#facc15', '#a855f7']
+    : [base, base, '#f472b6', '#fb7185', '#fda4af', '#facc15', '#a855f7'];
+}
+
+function triggerConfetti(winner) {
+  if (confettiAnimId) {
+    cancelAnimationFrame(confettiAnimId);
+    confettiAnimId = null;
+  }
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+  const colors = getConfettiColors(winner);
+  const particleCount = 100;
+  const centerX = confettiCanvas.width / 2;
+  const centerY = confettiCanvas.height / 2;
+  const particles = [];
+
+  for (let i = 0; i < particleCount; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 8 + 4;
+    const size = Math.random() * 4 + 4;
+    particles.push({
+      x: centerX,
+      y: centerY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.2,
+    });
+  }
+
+  const duration = 1500;
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+    if (progress < 1) {
+      const opacity = 1 - Math.pow(progress, 3);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.25;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.rotation += p.rotationSpeed;
+
+        confettiCtx.save();
+        confettiCtx.translate(p.x, p.y);
+        confettiCtx.rotate(p.rotation);
+        confettiCtx.globalAlpha = opacity;
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        confettiCtx.restore();
+      });
+      confettiAnimId = requestAnimationFrame(animate);
+    } else {
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettiAnimId = null;
+    }
+  }
+
+  confettiAnimId = requestAnimationFrame(animate);
+}
+
 function checkWin() {
   for (const pattern of winPatterns) {
     const [a, b, c] = pattern;
@@ -212,6 +290,7 @@ function checkWin() {
       const style = getComputedStyle(document.documentElement);
       const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
       drawWinLine(pattern, winColor);
+      triggerConfetti(currentPlayer);
       return true;
     }
   }
@@ -241,7 +320,10 @@ function resetGame() {
   });
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
+  if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+  confettiAnimId = null;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
   triggerBoardEnter();
 }
 

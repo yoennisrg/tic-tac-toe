@@ -128,14 +128,22 @@ h1 {
   position: relative;
 }
 
-#winCanvas {
+#winCanvas,
+#confettiCanvas {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+#winCanvas {
   z-index: 1;
+}
+
+#confettiCanvas {
+  z-index: 2;
 }
 
 .cell {
