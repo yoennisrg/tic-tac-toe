@@ -65,10 +65,21 @@ let currentPlayer = 'X';
 let gameState = ['', '', '', '', '', '', '', '', ''];
 let gameActive = true;
 let winAnimId = null;
+let currentWinPattern = null;
 
 function resizeCanvas() {
-  canvas.width = board.offsetWidth;
-  canvas.height = board.offsetHeight;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = board.getBoundingClientRect();
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (currentWinPattern) {
+    if (winAnimId) {
+      cancelAnimationFrame(winAnimId);
+      winAnimId = null;
+    }
+    redrawWinLine(currentWinPattern);
+  }
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -164,7 +175,14 @@ function getCellCenter(index) {
   };
 }
 
-function drawWinLine(pattern, color) {
+function getWinColor(player) {
+  const style = getComputedStyle(document.documentElement);
+  return style.getPropertyValue(player === 'X' ? '--color-x' : '--color-o').trim();
+}
+
+function drawWinLine(pattern) {
+  currentWinPattern = pattern;
+  const winner = gameState[pattern[0]];
   const start = getCellCenter(pattern[0]);
   const end = getCellCenter(pattern[2]);
   const duration = 400;
@@ -174,14 +192,14 @@ function drawWinLine(pattern, color) {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, board.offsetWidth, board.offsetHeight);
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
     ctx.lineTo(
       start.x + (end.x - start.x) * progress,
       start.y + (end.y - start.y) * progress,
     );
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = getWinColor(winner);
     ctx.lineWidth = 5;
     ctx.lineCap = 'round';
     ctx.stroke();
@@ -192,6 +210,22 @@ function drawWinLine(pattern, color) {
   }
 
   winAnimId = requestAnimationFrame(animate);
+}
+
+function redrawWinLine(pattern) {
+  const winner = gameState[pattern[0]];
+  if (!winner) return;
+  const start = getCellCenter(pattern[0]);
+  const end = getCellCenter(pattern[2]);
+
+  ctx.clearRect(0, 0, board.offsetWidth, board.offsetHeight);
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  ctx.lineTo(end.x, end.y);
+  ctx.strokeStyle = getWinColor(winner);
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.stroke();
 }
 
 function checkWin() {
@@ -209,9 +243,7 @@ function checkWin() {
       localStorage.setItem('scoreO', scoreO);
       updateScoreDisplay();
       saveGameHistory(currentPlayer);
-      const style = getComputedStyle(document.documentElement);
-      const winColor = style.getPropertyValue(currentPlayer === 'X' ? '--color-x' : '--color-o').trim();
-      drawWinLine(pattern, winColor);
+      drawWinLine(pattern);
       return true;
     }
   }
@@ -241,7 +273,8 @@ function resetGame() {
   });
   if (winAnimId) cancelAnimationFrame(winAnimId);
   winAnimId = null;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  currentWinPattern = null;
+  ctx.clearRect(0, 0, board.offsetWidth, board.offsetHeight);
   triggerBoardEnter();
 }
 
@@ -309,6 +342,9 @@ function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   themeToggle.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}\u{FE0F}';
   localStorage.setItem('theme', theme);
+  if (currentWinPattern) {
+    redrawWinLine(currentWinPattern);
+  }
 }
 
 function toggleTheme() {
