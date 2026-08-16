@@ -63,6 +63,7 @@ body {
   padding: 2.5rem;
   box-shadow: 0 8px 32px var(--glass-shadow);
   width: min(100%, 500px);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 
 h1 {
@@ -111,12 +112,14 @@ h1 {
   font-size: 0.9rem;
   color: #888;
   font-weight: 600;
+  transition: color 0.3s;
 }
 
 .status {
   font-size: 1.25rem;
   margin-bottom: 1.5rem;
   min-height: 2rem;
+  transition: color 0.3s;
 }
 
 .board {
@@ -294,6 +297,7 @@ h1 {
   border-bottom: 1px solid rgba(128, 128, 128, 0.2);
   display: flex;
   justify-content: space-between;
+  transition: border-color 0.3s, color 0.3s;
 }
 
 .history-entry:last-child {
@@ -305,6 +309,7 @@ h1 {
   color: #888;
   font-size: 0.85rem;
   padding: 0.5rem;
+  transition: color 0.3s;
 }
 
 .top-buttons {
