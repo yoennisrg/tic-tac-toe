@@ -243,6 +243,32 @@ h1 {
   margin-left: 0.5rem;
 }
 
+.score {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.score-badge {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: var(--cell-bg);
+  min-width: 80px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.score-badge--x {
+  color: var(--color-x);
+}
+
+.score-badge--o {
+  color: var(--color-o);
+}
+
 .history {
   margin-top: 1.5rem;
   text-align: left;
