@@ -1,9 +1,11 @@
 :root {
+  color-scheme: dark;
   --bg: #0f0f1a;
   --text: #eee;
   --cell-bg: rgba(255, 255, 255, 0.06);
   --cell-hover: rgba(255, 255, 255, 0.10);
   --cell-win: #2d6a4f;
+  --win-symbol: #ffffff;
   --btn-bg-start: #4a6cf7;
   --btn-bg-end: #6366f1;
   --btn-reset-bg-start: #ef4444;
@@ -17,11 +19,13 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --bg: #eef1f5;
   --text: #1a1a2e;
   --cell-bg: rgba(255, 255, 255, 0.7);
   --cell-hover: rgba(255, 255, 255, 0.9);
   --cell-win: #a7d8a7;
+  --win-symbol: #14532d;
   --btn-bg-start: #4a6cf7;
   --btn-bg-end: #6366f1;
   --btn-reset-bg-start: #ef4444;
@@ -63,6 +67,7 @@ body {
   padding: 2.5rem;
   box-shadow: 0 8px 32px var(--glass-shadow);
   width: min(100%, 500px);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 
 h1 {
@@ -204,7 +209,7 @@ h1 {
 
 .cell.win.x,
 .cell.win.o {
-  color: #fff;
+  color: var(--win-symbol);
 }
 
 @keyframes draw-line {
@@ -327,7 +332,7 @@ h1 {
   color: var(--text);
   font-size: 1.25rem;
   cursor: pointer;
-  transition: background 0.3s, color 0.3s, transform 0.3s;
+  transition: background 0.3s, border-color 0.3s, color 0.3s, transform 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;

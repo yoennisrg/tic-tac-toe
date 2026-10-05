@@ -8,11 +8,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script>
+    try {
+      document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <div class="top-buttons">
     <button class="top-btn mute-toggle" id="muteToggle" aria-label="Toggle sound">🔊</button>
-    <button class="top-btn theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
+    <button class="top-btn theme-toggle" id="themeToggle" aria-label="Dark mode" aria-pressed="true"></button>
   </div>
   <div class="container">
     <h1>Tic-Tac-Toe</h1>
