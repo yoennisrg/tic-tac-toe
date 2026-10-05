@@ -308,6 +308,7 @@ function clearHistory() {
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   themeToggle.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}\u{FE0F}';
+  themeToggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
   localStorage.setItem('theme', theme);
 }
 
