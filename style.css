@@ -243,6 +243,29 @@ h1 {
   margin-left: 0.5rem;
 }
 
+.score {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.score-x {
+  color: var(--color-x);
+}
+
+.score-o {
+  color: var(--color-o);
+}
+
+.score-sep {
+  opacity: 0.6;
+  font-weight: 400;
+}
+
 .history {
   margin-top: 1.5rem;
   text-align: left;

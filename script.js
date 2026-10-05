@@ -121,8 +121,9 @@ function setNamesDisabled(disabled) {
 
 function updateScoreDisplay() {
   scoreDisplay.innerHTML = `
-    <span class="score-badge score-badge--x">${getPlayerName('X')}: ${scoreX}</span>
-    <span class="score-badge score-badge--o">${getPlayerName('O')}: ${scoreO}</span>
+    <span class="score-x">X: ${scoreX}</span>
+    <span class="score-sep">|</span>
+    <span class="score-o">O: ${scoreO}</span>
   `;
 }
 updateScoreDisplay();
