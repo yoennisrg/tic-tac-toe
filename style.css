@@ -119,6 +119,14 @@ h1 {
   min-height: 2rem;
 }
 
+.score {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(3, min(26vw, 110px));
